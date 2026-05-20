@@ -9,7 +9,7 @@ import unusedImports from 'eslint-plugin-unused-imports';
 
 export default defineConfig(
   {
-    ignores: ['eslint.config.mjs', 'commitlint.config.mjs'],
+    ignores: ['eslint.config.mjs', 'commitlint.config.mjs', 'dist/**'],
   },
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
