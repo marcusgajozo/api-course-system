@@ -21,7 +21,11 @@
     "prepare": "husky",
     "docker:up": "DOCKER_UID=$(id -u) DOCKER_GID=$(id -g) docker compose -f docker-compose.local.yml up",
     "docker:down": "docker compose -f docker-compose.local.yml down",
-    "lint:fix": "eslint --fix; prettier . --write"
+    "lint:fix": "eslint --fix; prettier . --write",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
+    "migration:generate": "pnpm typeorm -- migration:generate -d ./src/data-source.ts ./src/migrations/AutoMigration",
+    "migration:run": "pnpm typeorm -- migration:run -d ./src/data-source.ts",
+    "migration:revert": "pnpm typeorm -- migration:revert -d ./src/data-source.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
