@@ -1,12 +1,15 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
 import {
   PaginatedResponseDto,
   PaginationQueryDto,
 } from '@/common/dtos/pagination.dto';
+import { ResponseDto } from '@/common/dtos/response.dto';
 
 import { CursosController } from '../controllers/cursos.controller';
 import { CreateCursoDto } from '../dtos/create-curso.dto';
+import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
@@ -97,12 +100,37 @@ describe('CursosController', () => {
 
       const spyFindOne = jest
         .spyOn(service, 'findOne')
-        .mockRejectedValue(new Error('Curso não encontrado'));
+        .mockRejectedValue(new NotFoundException('Curso não encontrado'));
 
       await expect(controller.findOne(id)).rejects.toThrow(
         'Curso não encontrado',
       );
       expect(spyFindOne).toHaveBeenCalledWith(id);
+    });
+  });
+
+  describe('update', () => {
+    it('deve chamar service.update e retornar o curso atualizado', async () => {
+      const id = '123e4567-e89b-12d3-a456-426614174000';
+      const dto: UpdateCursoDto = {
+        descricao: 'Curso atualizado',
+      };
+
+      const cursoAtualizado = makeCurso({
+        ...dto,
+        updatedAt: new Date(),
+      });
+
+      const responseCurso: ResponseDto<CursoEntity> = {
+        data: cursoAtualizado,
+      };
+
+      const spyServiceUpdate = jest
+        .spyOn(service, 'update')
+        .mockResolvedValue(cursoAtualizado);
+
+      await expect(controller.update(id, dto)).resolves.toEqual(responseCurso);
+      expect(spyServiceUpdate).toHaveBeenCalledWith(id, dto);
     });
   });
 });
