@@ -5,7 +5,13 @@ import { Server } from 'http';
 import request from 'supertest';
 import { Repository } from 'typeorm';
 
+import { ErrorResponseDto } from '@/common/dtos/error-response.dto';
+import {
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
+import { GlobalExceptionFilter } from '@/common/filters/global-exception.filter';
 import { CursosModule } from '@/modules/cursos/cursos.module';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
@@ -34,6 +40,7 @@ describe('(e2e) Cursos', () => {
     }).compile();
 
     app = module.createNestApplication();
+    app.useGlobalFilters(new GlobalExceptionFilter());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
     await app.init();
 
@@ -70,11 +77,61 @@ describe('(e2e) Cursos', () => {
       expect(body.data.createdAt).toBeDefined();
     });
 
-    it('deve retornar 400 para body inválido', async () => {
-      await request(httpServer)
+    it('deve retornar 400 com contrato de erro para body inválido', async () => {
+      const response = await request(httpServer)
         .post('/api/cursos')
         .send({ titulo: 'Sem outros campos' })
         .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos');
+    });
+  });
+
+  describe('GET /api/cursos', () => {
+    it('deve retornar cursos com paginação', async () => {
+      const response = await request(httpServer).get('/api/cursos').expect(200);
+      const body = response.body as PaginatedResponseDto<CursoEntity>;
+
+      expect(body.data).toBeInstanceOf(Array);
+      expect(body.meta).toBeDefined();
+      expect(body.meta.page).toBe(1);
+      expect(body.meta.limit).toBe(10);
+    });
+
+    it('deve retornar cursos com paginação usando query params', async () => {
+      const query: PaginationQueryDto = { page: 2, limit: 20 };
+
+      const response = await request(httpServer)
+        .get(`/api/cursos?page=${query.page}&limit=${query.limit}`)
+        .expect(200);
+      const body = response.body as PaginatedResponseDto<CursoEntity>;
+
+      expect(body.data).toBeInstanceOf(Array);
+      expect(body.meta).toBeDefined();
+      expect(body.meta.page).toBe(query.page);
+      expect(body.meta.limit).toBe(query.limit);
+    });
+
+    it('deve retornar 400 para query params inválidos', async () => {
+      const query = { page: -1, limit: 'abc' };
+
+      const response = await request(httpServer)
+        .get(`/api/cursos?page=${query.page}&limit=${query.limit}`)
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos?page=-1&limit=abc');
     });
   });
 });
