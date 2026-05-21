@@ -14,4 +14,7 @@ export class CursoEntity extends BaseEntity {
 
   @Column({ type: 'enum', enum: TemasEnum })
   temas: TemasEnum[];
+
+  @Column()
+  urlImagem: string;
 }
