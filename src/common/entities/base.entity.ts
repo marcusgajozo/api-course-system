@@ -4,9 +4,17 @@ export abstract class BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'created_at', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    type: 'timestamptz',
+    name: 'created_at',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
-  @Column({ nullable: true, name: 'updated_at' })
+  @Column({
+    type: 'timestamptz',
+    name: 'updated_at',
+    nullable: true,
+  })
   updatedAt?: Date;
 }
