@@ -11,7 +11,7 @@ import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
 import { makeCurso } from './utils/make-curso';
 
-describe('CursosService', () => {
+describe('(Unit test) CursosService', () => {
   let service: CursosService;
   let repo: jest.Mocked<Repository<CursoEntity>>;
 
