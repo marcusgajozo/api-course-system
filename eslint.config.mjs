@@ -7,6 +7,34 @@ import tseslint from 'typescript-eslint';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import unusedImports from 'eslint-plugin-unused-imports';
 
+const noCommentsPlugin = {
+  rules: {
+    'no-comments': {
+      meta: {
+        type: /** @type {const} */ ('suggestion'),
+        messages: {
+          noComment: 'Comentários não são permitidos no código.',
+        },
+      },
+      /** @param {import('eslint').Rule.RuleContext} context */
+      create(context) {
+        const sourceCode = context.sourceCode;
+        return {
+          Program() {
+            for (const comment of sourceCode.getAllComments()) {
+              const value = comment.value.trim();
+              if (value.startsWith('eslint')) continue;
+              if (value.startsWith('@ts-')) continue;
+              if (comment.loc)
+                context.report({ loc: comment.loc, messageId: 'noComment' });
+            }
+          },
+        };
+      },
+    },
+  },
+};
+
 export default defineConfig(
   {
     ignores: ['eslint.config.mjs', 'commitlint.config.mjs', 'dist/**'],
@@ -32,6 +60,7 @@ export default defineConfig(
     plugins: {
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
+      'no-comments': noCommentsPlugin,
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
@@ -50,6 +79,7 @@ export default defineConfig(
           argsIgnorePattern: '^_',
         },
       ],
+      'no-comments/no-comments': 'warn',
       'no-console': 'error',
       'no-warning-comments': [
         'warn',
