@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import {
   PaginatedResponseDto,
@@ -28,5 +28,10 @@ export class CursosController {
       limit: query.limit,
       totalCount: total,
     });
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string): Promise<CursoEntity> {
+    return this.cursosService.findOne(id);
   }
 }

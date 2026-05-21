@@ -78,4 +78,31 @@ describe('CursosController', () => {
       expect(spyFindAll).toHaveBeenCalledWith(query);
     });
   });
+
+  describe('findOne', () => {
+    it('deve chamar service.findOne e retornar o curso', async () => {
+      const curso = makeCurso();
+      const id = '123e4567-e89b-12d3-a456-426614174000';
+
+      const spyFindOne = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(curso);
+
+      await expect(controller.findOne(id)).resolves.toEqual(curso);
+      expect(spyFindOne).toHaveBeenCalledWith(id);
+    });
+
+    it('deve lançar erro se curso não for encontrado', async () => {
+      const id = '123e4567-e89b-12d3-a456-426614174000';
+
+      const spyFindOne = jest
+        .spyOn(service, 'findOne')
+        .mockRejectedValue(new Error('Curso não encontrado'));
+
+      await expect(controller.findOne(id)).rejects.toThrow(
+        'Curso não encontrado',
+      );
+      expect(spyFindOne).toHaveBeenCalledWith(id);
+    });
+  });
 });
