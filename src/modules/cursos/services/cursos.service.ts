@@ -30,7 +30,14 @@ export class CursosService {
 
   async update(id: string, dto: UpdateCursoDto): Promise<CursoEntity> {
     const curso = await this.findOne(id);
+    const date = new Date();
+    curso.updatedAt = date;
     Object.assign(curso, dto);
     return this.cursoRepository.save(curso);
+  }
+
+  async remove(id: string): Promise<void> {
+    await this.findOne(id);
+    await this.cursoRepository.delete(id);
   }
 }
