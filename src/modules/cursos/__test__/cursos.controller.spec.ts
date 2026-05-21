@@ -15,7 +15,7 @@ import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
 import { makeCurso } from './utils/make-curso';
 
-describe('CursosController', () => {
+describe('(Unit test) CursosController', () => {
   let controller: CursosController;
   let service: jest.Mocked<CursosService>;
 
@@ -131,6 +131,17 @@ describe('CursosController', () => {
 
       await expect(controller.update(id, dto)).resolves.toEqual(responseCurso);
       expect(spyServiceUpdate).toHaveBeenCalledWith(id, dto);
+    });
+  });
+
+  describe('remove', () => {
+    it('deve chamar service.remove e retornar a resposta de sucesso', async () => {
+      const id = '123e4567-e89b-12d3-a456-426614174000';
+
+      const spyServiceRemove = jest.spyOn(service, 'remove');
+
+      await expect(controller.remove(id)).resolves.toBeUndefined();
+      expect(spyServiceRemove).toHaveBeenCalledWith(id);
     });
   });
 });

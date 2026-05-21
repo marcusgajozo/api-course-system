@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Param,
   Patch,
   Post,
@@ -52,5 +54,11 @@ export class CursosController {
   ): Promise<ResponseDto<CursoEntity>> {
     const updatedCurso = await this.cursosService.update(id, updateCursoDto);
     return new ResponseDto<CursoEntity>(updatedCurso);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id') id: string): Promise<void> {
+    return this.cursosService.remove(id);
   }
 }
