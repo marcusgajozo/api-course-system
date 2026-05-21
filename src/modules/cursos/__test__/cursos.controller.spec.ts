@@ -1,7 +1,13 @@
 import { Test } from '@nestjs/testing';
 
+import {
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@/common/dtos/pagination.dto';
+
 import { CursosController } from '../controllers/cursos.controller';
 import { CreateCursoDto } from '../dtos/create-curso.dto';
+import { CursoEntity } from '../entities/curso.entity';
 import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
 import { makeCurso } from './utils/make-curso';
@@ -46,6 +52,30 @@ describe('CursosController', () => {
 
       await expect(controller.create(dto)).resolves.toEqual(curso);
       expect(spyCreate).toHaveBeenCalledWith(dto);
+    });
+  });
+
+  describe('findAll', () => {
+    it('deve chamar service.findAll e retornar os cursos paginados', async () => {
+      const cursos = [makeCurso(), makeCurso()];
+      const query: PaginationQueryDto = { page: 1, limit: 10 };
+
+      const expected: PaginatedResponseDto<CursoEntity> = {
+        data: cursos,
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          totalCount: 2,
+          totalPages: 1,
+        },
+      };
+
+      const spyFindAll = jest
+        .spyOn(service, 'findAll')
+        .mockResolvedValue([cursos, cursos.length]);
+
+      await expect(controller.findAll(query)).resolves.toEqual(expected);
+      expect(spyFindAll).toHaveBeenCalledWith(query);
     });
   });
 });
