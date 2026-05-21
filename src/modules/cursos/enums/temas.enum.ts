@@ -1,7 +1,7 @@
 export enum TemasEnum {
-  inovacao = 'Inovação',
-  tecnologia = 'Tecnologia',
-  marketing = 'Marketing',
-  empreendedorismo = 'Empreendedorismo',
-  agro = 'Agro',
+  INOVACAO = 'Inovação',
+  TECNOLOGIA = 'Tecnologia',
+  MARKETING = 'Marketing',
+  EMPREENDEDORISMO = 'Empreendedorismo',
+  AGRO = 'Agro',
 }
