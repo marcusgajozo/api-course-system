@@ -26,8 +26,11 @@ export class CursosController {
   constructor(private readonly cursosService: CursosService) {}
 
   @Post()
-  async create(@Body() createCursoDto: CreateCursoDto): Promise<CursoEntity> {
-    return this.cursosService.create(createCursoDto);
+  async create(
+    @Body() createCursoDto: CreateCursoDto,
+  ): Promise<ResponseDto<CursoEntity>> {
+    const createdCurso = await this.cursosService.create(createCursoDto);
+    return new ResponseDto<CursoEntity>(createdCurso);
   }
 
   @Get()
@@ -43,8 +46,9 @@ export class CursosController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<CursoEntity> {
-    return this.cursosService.findOne(id);
+  async findOne(@Param('id') id: string): Promise<ResponseDto<CursoEntity>> {
+    const curso = await this.cursosService.findOne(id);
+    return new ResponseDto<CursoEntity>(curso);
   }
 
   @Patch(':id')

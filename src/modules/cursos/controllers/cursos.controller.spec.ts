@@ -53,7 +53,9 @@ describe('(Unit test) CursosController', () => {
 
       const spyCreate = jest.spyOn(service, 'create').mockResolvedValue(curso);
 
-      await expect(controller.create(dto)).resolves.toEqual(curso);
+      await expect(controller.create(dto)).resolves.toEqual(
+        new ResponseDto<CursoEntity>(curso),
+      );
       expect(spyCreate).toHaveBeenCalledWith(dto);
     });
   });
@@ -91,7 +93,9 @@ describe('(Unit test) CursosController', () => {
         .spyOn(service, 'findOne')
         .mockResolvedValue(curso);
 
-      await expect(controller.findOne(id)).resolves.toEqual(curso);
+      await expect(controller.findOne(id)).resolves.toEqual(
+        new ResponseDto<CursoEntity>(curso),
+      );
       expect(spyFindOne).toHaveBeenCalledWith(id);
     });
 
