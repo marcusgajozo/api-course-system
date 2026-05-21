@@ -5,11 +5,11 @@ import { Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 
+import { makeCurso } from '../__test__/utils/make-curso';
 import { CreateCursoDto } from '../dtos/create-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { TemasEnum } from '../enums/temas.enum';
-import { CursosService } from '../services/cursos.service';
-import { makeCurso } from './utils/make-curso';
+import { CursosService } from './cursos.service';
 
 describe('(Unit test) CursosService', () => {
   let service: CursosService;

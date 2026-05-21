@@ -7,13 +7,13 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
+import { makeCurso } from '../__test__/utils/make-curso';
 import { CursosController } from '../controllers/cursos.controller';
 import { CreateCursoDto } from '../dtos/create-curso.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
-import { makeCurso } from './utils/make-curso';
 
 describe('(Unit test) CursosController', () => {
   let controller: CursosController;
