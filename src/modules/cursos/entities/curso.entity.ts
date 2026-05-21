@@ -12,7 +12,7 @@ export class CursoEntity extends BaseEntity {
   @Column()
   descricao: string;
 
-  @Column({ type: 'enum', enum: TemasEnum })
+  @Column({ type: 'enum', enum: TemasEnum, array: true })
   temas: TemasEnum[];
 
   @Column()
