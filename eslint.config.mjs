@@ -37,7 +37,12 @@ const noCommentsPlugin = {
 
 export default defineConfig(
   {
-    ignores: ['eslint.config.mjs', 'commitlint.config.mjs', 'dist/**'],
+    ignores: [
+      'eslint.config.mjs',
+      'commitlint.config.mjs',
+      'jest.config.js',
+      'dist/**',
+    ],
   },
   eslint.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
