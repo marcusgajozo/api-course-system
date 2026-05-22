@@ -75,7 +75,7 @@ describe('(Unit test) TurmasService', () => {
   });
 
   describe('findOne', () => {
-    it('deve retornar o turma quando encontrado', async () => {
+    it('deve retornar a turma quando encontrado', async () => {
       const turma = makeReturnedTurma();
       repo.findOneBy.mockResolvedValue(turma);
 
@@ -92,7 +92,7 @@ describe('(Unit test) TurmasService', () => {
   });
 
   describe('update', () => {
-    it('deve atualizar e retornar o turma', async () => {
+    it('deve atualizar e retornar a turma', async () => {
       const turma = makeReturnedTurma();
 
       const spyCursoFindOne = jest.spyOn(cursosService, 'findOne');

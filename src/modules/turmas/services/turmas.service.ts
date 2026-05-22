@@ -32,7 +32,7 @@ export class TurmasService {
     const turma = await this.turmaRepository.findOneBy({ id });
 
     if (!turma) {
-      throw new NotFoundException('Turma não encontrado');
+      throw new NotFoundException('Turma não encontrada');
     }
 
     return turma;
