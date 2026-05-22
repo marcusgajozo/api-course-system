@@ -1,7 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  RelationId,
+} from 'typeorm';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { TurmaStatusEnum } from '../enums/turma-status.enum';
 
@@ -34,4 +42,10 @@ export class TurmaEntity extends BaseEntity {
 
   @RelationId((turma: TurmaEntity) => turma.curso)
   cursoId: string;
+
+  @ManyToMany(() => UsuarioEntity, (usuario) => usuario.turmas)
+  usuarios: UsuarioEntity[];
+
+  @RelationId((turma: TurmaEntity) => turma.usuarios)
+  usuariosIds: string[];
 }
