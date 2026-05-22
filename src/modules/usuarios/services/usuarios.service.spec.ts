@@ -6,6 +6,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
+import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
 import { UsuarioEntity } from '../entities/usuario.entity';
@@ -204,6 +205,27 @@ describe('(Unit test) UsuariosService', () => {
 
       expect(result).toEqual([usuarios, 1]);
       expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
+    });
+  });
+
+  describe('matricular', () => {
+    it('deve matricular usuario', async () => {
+      const dto = makeMatricular();
+      const usuario = makeReturnedUsuario();
+
+      const spyFindOn = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(usuario);
+
+      const spyDataSource = jest.spyOn(dataSource, 'transaction');
+      const spyMatricularAluno = jest
+        .spyOn(turmasService, 'matricularAluno')
+        .mockResolvedValue(undefined);
+
+      await expect(service.matricular({ ...dto })).resolves.toHaveBeenCalled();
+      expect(spyMatricularAluno).toHaveBeenCalled();
+      expect(spyDataSource).toHaveBeenCalled();
+      expect(spyFindOn).toHaveBeenCalled();
     });
   });
 });

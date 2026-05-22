@@ -6,6 +6,7 @@ import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
+import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
 
@@ -66,6 +67,13 @@ export class UsuariosService {
     return this.usuarioRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+    });
+  }
+
+  async matricular(dto: MatricularDto) {
+    const usuario = await this.findOne(dto.usuarioId);
+    await this.dataSource.transaction(async (manager) => {
+      await this.turmasService.matricularAluno(usuario, dto.turmasIds, manager);
     });
   }
 }

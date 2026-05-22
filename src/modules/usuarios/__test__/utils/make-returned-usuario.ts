@@ -8,5 +8,7 @@ export const makeReturnedUsuario = (
   email: 'teste@teste.com',
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  turmas: [],
+  turmasIds: [],
   ...overrides,
 });
