@@ -33,6 +33,7 @@ describe('(e2e) Cursos', () => {
           database: process.env.DATABASE_NAME,
           schema: process.env.DATABASE_SCHEMA,
           entities: [CursoEntity],
+          dropSchema: true,
           synchronize: true,
         }),
         CursosModule,
@@ -59,7 +60,7 @@ describe('(e2e) Cursos', () => {
   const cursoValido = {
     titulo: 'Curso de NestJS',
     descricao: 'Aprenda NestJS do zero',
-    temas: [TemasEnum.INOVACAO],
+    temas: [TemasEnum.INOVACAO, TemasEnum.TECNOLOGIA],
     urlImagem: 'http://example.com/nestjs.png',
   };
 
@@ -132,6 +133,52 @@ describe('(e2e) Cursos', () => {
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
       expect(body.path).toBe('/api/cursos?page=-1&limit=abc');
+    });
+  });
+
+  describe('GET /api/cursos/:id', () => {
+    it('deve retornar um curso existente', async () => {
+      const curso = await repo.save(repo.create(cursoValido));
+
+      const response = await request(httpServer)
+        .get(`/api/cursos/${curso.id}`)
+        .expect(200);
+
+      const body = response.body as ResponseDto<CursoEntity>;
+
+      expect(body.data).toMatchObject({
+        ...cursoValido,
+      });
+    });
+
+    it('deve retornar 404 para curso inexistente', async () => {
+      const response = await request(httpServer)
+        .get('/api/cursos/00000000-0000-0000-0000-000000000000')
+        .expect(404);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBe('Curso não encontrado');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(
+        '/api/cursos/00000000-0000-0000-0000-000000000000',
+      );
+    });
+
+    it('deve retornar 400 para id com formato inválido', async () => {
+      const response = await request(httpServer)
+        .get('/api/cursos/123')
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBe('Formatação de UUID inválida');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos/123');
     });
   });
 });
