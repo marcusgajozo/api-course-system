@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { makeReturnedCurso } from '@/modules/cursos/__test__/utils/make-returned-curso';
@@ -35,6 +35,13 @@ describe('(Unit test) TurmasService', () => {
           provide: CursosService,
           useValue: {
             findOne: jest.fn(),
+          },
+        },
+        {
+          provide: EntityManager,
+          useValue: {
+            create: jest.fn(),
+            save: jest.fn(),
           },
         },
       ],
@@ -174,4 +181,6 @@ describe('(Unit test) TurmasService', () => {
       expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
     });
   });
+
+  describe('matricularAluno', () => {});
 });

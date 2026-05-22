@@ -21,6 +21,7 @@ export class TurmasService {
   constructor(
     @InjectRepository(TurmaEntity)
     private turmaRepository: Repository<TurmaEntity>,
+    private readonly defaultManager: EntityManager,
     private cursosService: CursosService,
   ) {}
 
@@ -80,10 +81,12 @@ export class TurmasService {
   async matricularAluno(
     usuario: UsuarioEntity,
     turmasIds: string[],
-    manager: EntityManager,
+    manager?: EntityManager,
   ): Promise<void> {
+    const currentManager = manager || this.defaultManager;
+
     for (const turmaId of turmasIds) {
-      const turma = await manager.findOne(TurmaEntity, {
+      const turma = await currentManager.findOne(TurmaEntity, {
         where: { id: turmaId },
         relations: { usuarios: true },
       });
@@ -105,7 +108,7 @@ export class TurmasService {
       }
 
       turma.usuarios.push(usuario);
-      await manager.save(TurmaEntity, turma);
+      await currentManager.save(TurmaEntity, turma);
     }
   }
 }
