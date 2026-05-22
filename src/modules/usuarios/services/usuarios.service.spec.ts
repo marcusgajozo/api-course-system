@@ -217,12 +217,17 @@ describe('(Unit test) UsuariosService', () => {
         .spyOn(service, 'findOne')
         .mockResolvedValue(usuario);
 
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (manager: EntityManager) => Promise<void>) =>
+          cb({} as EntityManager),
+      );
       const spyDataSource = jest.spyOn(dataSource, 'transaction');
+
       const spyMatricularAluno = jest
         .spyOn(turmasService, 'matricularAluno')
         .mockResolvedValue(undefined);
 
-      await expect(service.matricular({ ...dto })).resolves.toHaveBeenCalled();
+      await expect(service.matricular({ ...dto })).resolves.toBeUndefined();
       expect(spyMatricularAluno).toHaveBeenCalled();
       expect(spyDataSource).toHaveBeenCalled();
       expect(spyFindOn).toHaveBeenCalled();
