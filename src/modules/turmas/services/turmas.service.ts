@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { CursosService } from '@/modules/cursos/services/cursos.service';
 
 import { CreateTurmaDto } from '../dtos/create-turma.dto';
@@ -38,12 +39,19 @@ export class TurmasService {
     return turma;
   }
 
-  async update(id: string, dto: UpdateTurmaDto): Promise<TurmaEntity> {
+  async update(id: string, dto: UpdateTurmaDto) {
     const turma = await this.findOne(id);
-    await this.cursosService.findOne(dto?.cursoId || '');
-    const date = new Date();
-    turma.updatedAt = date;
+
+    if (dto.cursoId) {
+      await this.cursosService.findOne(dto.cursoId);
+
+      turma.curso = {
+        id: dto.cursoId,
+      } as CursoEntity;
+    }
+
     Object.assign(turma, dto);
+
     return this.turmaRepository.save(turma);
   }
 
