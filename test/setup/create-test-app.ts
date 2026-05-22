@@ -4,13 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Server } from 'http';
 
 import { GlobalExceptionFilter } from '@/common/filters/global-exception.filter';
-
-interface CreateTestAppOptions {
-  imports: Parameters<typeof Test.createTestingModule>[0]['imports'];
-  entities: NonNullable<
-    Parameters<typeof TypeOrmModule.forRoot>[0]
-  >['entities'];
-}
+import { CursosModule } from '@/modules/cursos/cursos.module';
+import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
+import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
+import { TurmasModule } from '@/modules/turmas/turmas.module';
 
 interface TestApp {
   app: INestApplication;
@@ -18,10 +15,7 @@ interface TestApp {
   module: TestingModule;
 }
 
-export async function createTestApp({
-  imports,
-  entities,
-}: CreateTestAppOptions): Promise<TestApp> {
+export async function createTestApp(): Promise<TestApp> {
   const module = await Test.createTestingModule({
     imports: [
       TypeOrmModule.forRoot({
@@ -32,17 +26,18 @@ export async function createTestApp({
         password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
         schema: process.env.DATABASE_SCHEMA,
-        entities,
+        entities: [TurmaEntity, CursoEntity],
         dropSchema: true,
         synchronize: true,
       }),
-      ...(imports ?? []),
+      TurmasModule,
+      CursosModule,
     ],
   }).compile();
 
   const app = module.createNestApplication();
   app.useGlobalFilters(new GlobalExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.init();
 
   return {

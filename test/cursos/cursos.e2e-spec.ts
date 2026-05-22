@@ -10,7 +10,6 @@ import {
   PaginationQueryDto,
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
-import { CursosModule } from '@/modules/cursos/cursos.module';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
 
@@ -22,10 +21,7 @@ describe('(e2e) Cursos', () => {
   let repo: Repository<CursoEntity>;
 
   beforeAll(async () => {
-    const testApp = await createTestApp({
-      imports: [CursosModule],
-      entities: [CursoEntity],
-    });
+    const testApp = await createTestApp();
 
     app = testApp.app;
     httpServer = testApp.httpServer;
