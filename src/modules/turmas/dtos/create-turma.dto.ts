@@ -8,6 +8,8 @@ import {
   Min,
 } from 'class-validator';
 
+import { IsAfter } from '@/common/decorator/is-after.decorator';
+
 import { TurmaStatusEnum } from '../enums/turma-status.enum';
 
 export class CreateTurmaDto {
@@ -30,6 +32,9 @@ export class CreateTurmaDto {
 
   @IsDate()
   @Type(() => Date)
+  @IsAfter('dataFim', {
+    message: 'A data final deve ser maior que a data de início',
+  })
   dataFim: Date;
 
   @IsUUID()
