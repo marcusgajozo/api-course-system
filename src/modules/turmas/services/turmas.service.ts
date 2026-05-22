@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { CursosService } from '@/modules/cursos/services/cursos.service';
 
 import { CreateTurmaDto } from '../dtos/create-turma.dto';
 import { UpdateTurmaDto } from '../dtos/update-turma.dto';
@@ -12,35 +13,43 @@ import { TurmaEntity } from '../entities/turma.entity';
 export class TurmasService {
   constructor(
     @InjectRepository(TurmaEntity)
-    private cursoRepository: Repository<TurmaEntity>,
+    private turmaRepository: Repository<TurmaEntity>,
+    private cursosService: CursosService,
   ) {}
 
   async create(dto: CreateTurmaDto): Promise<TurmaEntity> {
-    const curso = this.cursoRepository.create(dto);
-    return this.cursoRepository.save(curso);
+    await this.cursosService.findOne(dto.cursoId);
+
+    const turma = this.turmaRepository.create({
+      ...dto,
+      curso: { id: dto.cursoId },
+    });
+
+    return this.turmaRepository.save(turma);
   }
 
   async findOne(id: string): Promise<TurmaEntity> {
-    const curso = await this.cursoRepository.findOneBy({ id });
+    const turma = await this.turmaRepository.findOneBy({ id });
 
-    if (!curso) {
+    if (!turma) {
       throw new NotFoundException('Turma não encontrado');
     }
 
-    return curso;
+    return turma;
   }
 
   async update(id: string, dto: UpdateTurmaDto): Promise<TurmaEntity> {
-    const curso = await this.findOne(id);
+    const turma = await this.findOne(id);
+    await this.cursosService.findOne(dto?.cursoId || '');
     const date = new Date();
-    curso.updatedAt = date;
-    Object.assign(curso, dto);
-    return this.cursoRepository.save(curso);
+    turma.updatedAt = date;
+    Object.assign(turma, dto);
+    return this.turmaRepository.save(turma);
   }
 
   async remove(id: string): Promise<void> {
     await this.findOne(id);
-    await this.cursoRepository.delete(id);
+    await this.turmaRepository.delete(id);
   }
 
   async findAll(
@@ -48,7 +57,7 @@ export class TurmasService {
   ): Promise<[TurmaEntity[], number]> {
     const { page, limit } = pagination;
 
-    return this.cursoRepository.findAndCount({
+    return this.turmaRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
     });
