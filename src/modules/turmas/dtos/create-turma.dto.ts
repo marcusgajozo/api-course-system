@@ -32,7 +32,7 @@ export class CreateTurmaDto {
 
   @IsDate()
   @Type(() => Date)
-  @IsAfter('dataFim', {
+  @IsAfter('dataInicio', {
     message: 'A data final deve ser maior que a data de início',
   })
   dataFim: Date;

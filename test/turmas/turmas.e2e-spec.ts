@@ -15,7 +15,7 @@ import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 
 import { createTestApp } from '../utils/create-test-app';
 import { createCurso } from '../utils/cursos.util';
-import { createTurma, turmaValido } from '../utils/turmas.util';
+import { createTurma, routeTurmaApi, turmaValido } from '../utils/turmas.util';
 
 describe('(e2e) Turmas', () => {
   let app: INestApplication;
@@ -47,7 +47,7 @@ describe('(e2e) Turmas', () => {
       const turma = { ...turmaValido, cursoId: curso.id };
 
       const response = await request(httpServer)
-        .post('/api/turmas')
+        .post(routeTurmaApi)
         .send(turma)
         .expect(201);
 
@@ -60,7 +60,7 @@ describe('(e2e) Turmas', () => {
 
     it('deve retornar 400 com contrato de erro para body inválido', async () => {
       const response = await request(httpServer)
-        .post('/api/turmas')
+        .post(routeTurmaApi)
         .send({ titulo: 'Sem outros campos' })
         .expect(400);
 
@@ -70,14 +70,36 @@ describe('(e2e) Turmas', () => {
       expect(body.error).toBe('Bad Request');
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
-      expect(body.path).toBe('/api/turmas');
+      expect(body.path).toBe(routeTurmaApi);
+    });
+
+    it('deve retornar 400 quando a dataFim > dataInicio', async () => {
+      const turma = {
+        ...turmaValido,
+        dataInicio: new Date('2026-01-02').toISOString(),
+        dataFim: new Date('2026-01-01').toISOString(),
+      };
+
+      const response = await request(httpServer)
+        .post(routeTurmaApi)
+        .send(turma)
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toContain(
+        'A data final deve ser maior que a data de início',
+      );
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(routeTurmaApi);
     });
 
     it('deve retornar 404 para quando o curso não existir', async () => {
       const turma = { ...turmaValido };
 
       const response = await request(httpServer)
-        .post('/api/turmas')
+        .post(routeTurmaApi)
         .send(turma)
         .expect(404);
 
@@ -87,13 +109,13 @@ describe('(e2e) Turmas', () => {
       expect(body.error).toBe('Not Found');
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
-      expect(body.path).toBe('/api/turmas');
+      expect(body.path).toBe(routeTurmaApi);
     });
   });
 
   describe('GET /api/turmas', () => {
     it('deve retornar turmas com paginação', async () => {
-      const response = await request(httpServer).get('/api/turmas').expect(200);
+      const response = await request(httpServer).get(routeTurmaApi).expect(200);
       const body = response.body as PaginatedResponseDto<TurmaEntity>;
 
       expect(body.data).toBeInstanceOf(Array);

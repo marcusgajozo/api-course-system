@@ -7,13 +7,15 @@ import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { createCurso } from './cursos.util';
 
+export const routeTurmaApi = '/api/turmas/';
+
 export const turma: CreateTurmaDto = {
   titulo: 'Curso de NestJS',
   descricao: 'Aprenda NestJS do zero',
   quantidadeVagas: 30,
   status: TurmaStatusEnum.DISPONIVEL,
-  dataInicio: new Date(),
-  dataFim: new Date(),
+  dataInicio: new Date('2026-01-01'),
+  dataFim: new Date('2026-01-10'),
   cursoId: '00000000-0000-0000-0000-000000000000',
 };
 
