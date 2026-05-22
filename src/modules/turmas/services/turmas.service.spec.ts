@@ -5,8 +5,8 @@ import { Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 
-import { makeTurma } from '../__test__/utils/make-turma';
-import { CreateTurmaDto } from '../dtos/create-turma.dto';
+import { makeReturnedTurma } from '../__test__/utils/make-returned-turma';
+import { makeTurmaCreated } from '../__test__/utils/make-turma-created';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmasService } from './turmas.service';
 
@@ -37,12 +37,8 @@ describe('(Unit test) TurmasService', () => {
 
   describe('create', () => {
     it('deve criar e retornar o curso', async () => {
-      const dto: CreateTurmaDto = {
-        titulo: 'Turma de NestJS',
-        descricao: 'Aprenda NestJS do zero',
-        urlImagem: 'http://example.com/nestjs.png',
-      };
-      const curso = makeTurma(dto);
+      const dto = makeTurmaCreated();
+      const curso = makeReturnedTurma(dto);
 
       repo.create.mockReturnValue(dto as unknown as TurmaEntity);
       repo.save.mockResolvedValue(curso);
@@ -53,7 +49,7 @@ describe('(Unit test) TurmasService', () => {
 
   describe('findOne', () => {
     it('deve retornar o curso quando encontrado', async () => {
-      const curso = makeTurma();
+      const curso = makeReturnedTurma();
       repo.findOneBy.mockResolvedValue(curso);
 
       await expect(service.findOne(curso.id)).resolves.toEqual(curso);
@@ -70,8 +66,10 @@ describe('(Unit test) TurmasService', () => {
 
   describe('update', () => {
     it('deve atualizar e retornar o curso', async () => {
-      const curso = makeTurma();
-      const cursoAtualizado = makeTurma({ titulo: 'Turma de NestJS Avançado' });
+      const curso = makeReturnedTurma();
+      const cursoAtualizado = makeReturnedTurma({
+        titulo: 'Turma de NestJS Avançado',
+      });
 
       const spyFindOne = jest
         .spyOn(service, 'findOne')
@@ -97,7 +95,7 @@ describe('(Unit test) TurmasService', () => {
 
   describe('remove', () => {
     it('deve remover o curso sem lançar exceção', async () => {
-      const curso = makeTurma();
+      const curso = makeReturnedTurma();
       const spyFindOne = jest
         .spyOn(service, 'findOne')
         .mockResolvedValue(curso);
@@ -121,7 +119,7 @@ describe('(Unit test) TurmasService', () => {
   describe('findAll', () => {
     it('deve retornar turmas paginados', async () => {
       const pagination: PaginationQueryDto = { page: 1, limit: 10 };
-      const turmas = [makeTurma()];
+      const turmas = [makeReturnedTurma()];
 
       const spyFindAndCount = jest
         .spyOn(repo, 'findAndCount')

@@ -7,8 +7,8 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
-import { makeTurma } from '../__test__/utils/make-turma';
-import { CreateTurmaDto } from '../dtos/create-turma.dto';
+import { makeReturnedTurma } from '../__test__/utils/make-returned-turma';
+import { makeTurmaCreated } from '../__test__/utils/make-turma-created';
 import { UpdateTurmaDto } from '../dtos/update-turma.dto';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmasService } from '../services/turmas.service';
@@ -40,20 +40,15 @@ describe('(Unit test) TurmasController', () => {
   });
 
   describe('create', () => {
-    it('deve chamar service.create e retornar o curso', async () => {
-      const dto: CreateTurmaDto = {
-        titulo: 'NestJS',
-        descricao: 'Turma de NestJS',
+    it('deve chamar service.create e retornar o turma', async () => {
+      const dto = makeTurmaCreated();
 
-        urlImagem: 'http://example.com/image.png',
-      };
+      const turma = makeReturnedTurma(dto);
 
-      const curso = makeTurma(dto);
-
-      const spyCreate = jest.spyOn(service, 'create').mockResolvedValue(curso);
+      const spyCreate = jest.spyOn(service, 'create').mockResolvedValue(turma);
 
       await expect(controller.create(dto)).resolves.toEqual(
-        new ResponseDto<TurmaEntity>(curso),
+        new ResponseDto<TurmaEntity>(turma),
       );
       expect(spyCreate).toHaveBeenCalledWith(dto);
     });
@@ -61,7 +56,7 @@ describe('(Unit test) TurmasController', () => {
 
   describe('findAll', () => {
     it('deve chamar service.findAll e retornar os turmas paginados', async () => {
-      const turmas = [makeTurma(), makeTurma()];
+      const turmas = [makeReturnedTurma(), makeReturnedTurma()];
       const query: PaginationQueryDto = { page: 1, limit: 10 };
 
       const expected: PaginatedResponseDto<TurmaEntity> = {
@@ -84,21 +79,21 @@ describe('(Unit test) TurmasController', () => {
   });
 
   describe('findOne', () => {
-    it('deve chamar service.findOne e retornar o curso', async () => {
-      const curso = makeTurma();
+    it('deve chamar service.findOne e retornar o turma', async () => {
+      const turma = makeReturnedTurma();
       const id = '123e4567-e89b-12d3-a456-426614174000';
 
       const spyFindOne = jest
         .spyOn(service, 'findOne')
-        .mockResolvedValue(curso);
+        .mockResolvedValue(turma);
 
       await expect(controller.findOne(id)).resolves.toEqual(
-        new ResponseDto<TurmaEntity>(curso),
+        new ResponseDto<TurmaEntity>(turma),
       );
       expect(spyFindOne).toHaveBeenCalledWith(id);
     });
 
-    it('deve lançar erro se curso não for encontrado', async () => {
+    it('deve lançar erro se turma não for encontrado', async () => {
       const id = '123e4567-e89b-12d3-a456-426614174000';
 
       const spyFindOne = jest
@@ -113,13 +108,13 @@ describe('(Unit test) TurmasController', () => {
   });
 
   describe('update', () => {
-    it('deve chamar service.update e retornar o curso atualizado', async () => {
+    it('deve chamar service.update e retornar o turma atualizado', async () => {
       const id = '123e4567-e89b-12d3-a456-426614174000';
       const dto: UpdateTurmaDto = {
         descricao: 'Turma atualizado',
       };
 
-      const cursoAtualizado = makeTurma({
+      const cursoAtualizado = makeReturnedTurma({
         ...dto,
         updatedAt: new Date(),
       });
