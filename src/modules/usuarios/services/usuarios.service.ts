@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
-import { CursosService } from '@/modules/cursos/services/cursos.service';
+import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
@@ -14,11 +14,25 @@ export class UsuariosService {
   constructor(
     @InjectRepository(UsuarioEntity)
     private usuarioRepository: Repository<UsuarioEntity>,
-    private cursosService: CursosService,
+    private turmasService: TurmasService,
+    private dataSource: DataSource,
   ) {}
 
   async create(dto: CreateUsuarioDto): Promise<UsuarioEntity> {
-    return this.usuarioRepository.save(dto);
+    if (!dto.turmasIds?.length) {
+      return this.usuarioRepository.save(dto);
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const usuario = manager.create(UsuarioEntity, dto);
+      await manager.save(usuario);
+      await this.turmasService.matricularAluno(
+        usuario,
+        dto.turmasIds!,
+        manager,
+      );
+      return usuario;
+    });
   }
 
   async findOne(id: string): Promise<UsuarioEntity> {

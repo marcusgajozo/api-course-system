@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateUsuarioDto {
   @IsString()
@@ -6,4 +6,9 @@ export class CreateUsuarioDto {
 
   @IsString()
   nome;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  turmasIds?: string[];
 }

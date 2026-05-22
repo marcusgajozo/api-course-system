@@ -1,14 +1,20 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { CursosService } from '@/modules/cursos/services/cursos.service';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { CreateTurmaDto } from '../dtos/create-turma.dto';
 import { UpdateTurmaDto } from '../dtos/update-turma.dto';
 import { TurmaEntity } from '../entities/turma.entity';
+import { TurmaStatusEnum } from '../enums/turma-status.enum';
 
 @Injectable()
 export class TurmasService {
@@ -69,5 +75,37 @@ export class TurmasService {
       skip: (page - 1) * limit,
       take: limit,
     });
+  }
+
+  async matricularAluno(
+    usuario: UsuarioEntity,
+    turmasIds: string[],
+    manager: EntityManager,
+  ): Promise<void> {
+    for (const turmaId of turmasIds) {
+      const turma = await manager.findOne(TurmaEntity, {
+        where: { id: turmaId },
+        relations: { usuarios: true },
+      });
+
+      if (!turma) {
+        throw new NotFoundException(`Turma ${turmaId} não encontrada`);
+      }
+
+      if (turma.status !== TurmaStatusEnum.DISPONIVEL) {
+        throw new ConflictException(
+          `Turma "${turma.titulo}" não está disponível para matrícula`,
+        );
+      }
+
+      if (turma.usuarios.length >= turma.quantidadeVagas) {
+        throw new ConflictException(
+          `Turma "${turma.titulo}" sem vagas disponíveis`,
+        );
+      }
+
+      turma.usuarios.push(usuario);
+      await manager.save(TurmaEntity, turma);
+    }
   }
 }

@@ -5,5 +5,6 @@ export const makeUsuarioCreated = (
 ): CreateUsuarioDto => ({
   email: 'test@test.com',
   nome: 'Test',
+  turmasIds: [],
   ...overrides,
 });

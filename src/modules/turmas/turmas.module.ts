@@ -10,5 +10,6 @@ import { TurmasService } from './services/turmas.service';
   imports: [TypeOrmModule.forFeature([TurmaEntity]), CursosModule],
   controllers: [TurmasController],
   providers: [TurmasService],
+  exports: [TurmasService],
 })
 export class TurmasModule {}

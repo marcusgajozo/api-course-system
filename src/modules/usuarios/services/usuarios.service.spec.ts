@@ -1,11 +1,10 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
-import { makeReturnedCurso } from '@/modules/cursos/__test__/utils/make-returned-curso';
-import { CursosService } from '@/modules/cursos/services/cursos.service';
+import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
@@ -15,7 +14,8 @@ import { UsuariosService } from './usuarios.service';
 describe('(Unit test) UsuariosService', () => {
   let service: UsuariosService;
   let repo: jest.Mocked<Repository<UsuarioEntity>>;
-  let cursosService: jest.Mocked<CursosService>;
+  let turmasService: jest.Mocked<TurmasService>;
+  let dataSource: jest.Mocked<DataSource>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -32,9 +32,15 @@ describe('(Unit test) UsuariosService', () => {
           },
         },
         {
-          provide: CursosService,
+          provide: TurmasService,
           useValue: {
-            findOne: jest.fn(),
+            matricularAluno: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: jest.fn(),
           },
         },
       ],
@@ -42,48 +48,94 @@ describe('(Unit test) UsuariosService', () => {
 
     service = module.get(UsuariosService);
     repo = module.get(getRepositoryToken(UsuarioEntity));
-    cursosService = module.get(CursosService);
+    turmasService = module.get(TurmasService);
+    dataSource = module.get(DataSource);
   });
 
   describe('create', () => {
-    it('deve criar e retornar a usuario', async () => {
-      const dto = makeUsuarioCreated();
+    it('deve criar usuário direto quando turmasIds não é informado', async () => {
+      const dto = makeUsuarioCreated({ turmasIds: undefined });
       const usuario = makeReturnedUsuario(dto);
-      const curso = makeReturnedCurso();
 
-      const spyCursoFindOne = jest
-        .spyOn(cursosService, 'findOne')
-        .mockResolvedValue(curso);
-
-      cursosService.findOne.mockResolvedValue(curso);
-      repo.create.mockReturnValue(usuario);
-      repo.save.mockResolvedValue(usuario);
+      const spySave = jest.spyOn(repo, 'save').mockResolvedValue(usuario);
+      const spyTransaction = jest.spyOn(dataSource, 'transaction');
 
       await expect(service.create(dto)).resolves.toEqual(usuario);
-
-      expect(spyCursoFindOne).toHaveBeenCalledTimes(1);
-      expect(spyCursoFindOne).toHaveBeenCalledWith(dto.cursoId);
+      expect(spySave).toHaveBeenCalledWith(dto);
+      expect(spyTransaction).not.toHaveBeenCalled();
     });
 
-    it('deve lançar NotFoundException se o curso não existir', async () => {
+    it('deve criar usuário direto quando turmasIds é vazio', async () => {
       const dto = makeUsuarioCreated();
+      const usuario = makeReturnedUsuario(dto);
 
-      cursosService.findOne.mockRejectedValue(new NotFoundException());
+      const spySave = jest.spyOn(repo, 'save').mockResolvedValue(usuario);
+      const spyTransaction = jest.spyOn(dataSource, 'transaction');
 
-      await expect(service.create(dto)).rejects.toThrow(NotFoundException);
+      await expect(service.create(dto)).resolves.toEqual(usuario);
+      expect(spySave).toHaveBeenCalledWith(dto);
+      expect(spyTransaction).not.toHaveBeenCalled();
+    });
+
+    it('deve criar usuário e matricular nas turmas em transação', async () => {
+      const dto = makeUsuarioCreated({ turmasIds: ['turma-uuid-1'] });
+      const usuario = makeReturnedUsuario(dto);
+
+      const managerCreate = jest.fn().mockReturnValue(usuario);
+      const managerSave = jest.fn().mockResolvedValue(usuario);
+
+      const manager = {
+        create: managerCreate,
+        save: managerSave,
+      } as unknown as EntityManager;
+
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (manager: EntityManager) => Promise<UsuarioEntity>) => cb(manager),
+      );
+
+      const spyMatricularAlunos = jest.spyOn(turmasService, 'matricularAluno');
+
+      await expect(service.create(dto)).resolves.toEqual(usuario);
+      expect(managerCreate).toHaveBeenCalledWith(UsuarioEntity, dto);
+      expect(managerSave).toHaveBeenCalledWith(usuario);
+      expect(spyMatricularAlunos).toHaveBeenCalledWith(
+        usuario,
+        dto.turmasIds,
+        manager,
+      );
+    });
+
+    it('deve propagar exceção e não criar usuário quando matrícula falha', async () => {
+      const dto = makeUsuarioCreated({ turmasIds: ['turma-uuid-1'] });
+      const usuario = makeReturnedUsuario(dto);
+
+      const manager = {
+        create: jest.fn().mockReturnValue(usuario),
+        save: jest.fn().mockResolvedValue(usuario),
+      } as unknown as EntityManager;
+
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (manager: EntityManager) => Promise<UsuarioEntity>) => cb(manager),
+      );
+
+      jest
+        .spyOn(turmasService, 'matricularAluno')
+        .mockRejectedValue(new ConflictException('Turma sem vagas'));
+
+      await expect(service.create(dto)).rejects.toThrow(ConflictException);
     });
   });
 
   describe('findOne', () => {
-    it('deve retornar a usuario quando encontrado', async () => {
+    it('deve retornar o usuário quando encontrado', async () => {
       const usuario = makeReturnedUsuario();
-      repo.findOneBy.mockResolvedValue(usuario);
+      jest.spyOn(repo, 'findOneBy').mockResolvedValue(usuario);
 
       await expect(service.findOne(usuario.id)).resolves.toEqual(usuario);
     });
 
     it('deve lançar NotFoundException quando não encontrado', async () => {
-      repo.findOneBy.mockResolvedValue(null);
+      jest.spyOn(repo, 'findOneBy').mockResolvedValue(null);
 
       await expect(service.findOne('id-inexistente')).rejects.toThrow(
         NotFoundException,
@@ -92,52 +144,32 @@ describe('(Unit test) UsuariosService', () => {
   });
 
   describe('update', () => {
-    it('deve atualizar e retornar a usuario', async () => {
+    it('deve atualizar e retornar o usuário', async () => {
       const usuario = makeReturnedUsuario();
-
-      const spyCursoFindOne = jest.spyOn(cursosService, 'findOne');
 
       const spyFindOne = jest
         .spyOn(service, 'findOne')
         .mockResolvedValue(usuario);
+      const spySave = jest.spyOn(repo, 'save').mockResolvedValue(usuario);
 
-      repo.save.mockResolvedValue(usuario);
-
-      const result = await service.update(usuario.id, usuario);
+      const result = await service.update(usuario.id, { nome: 'Novo nome' });
 
       expect(result).toEqual(usuario);
-      expect(spyCursoFindOne).toHaveBeenCalledTimes(1);
-      expect(spyCursoFindOne).toHaveBeenCalledWith(usuario.cursoId);
       expect(spyFindOne).toHaveBeenCalledWith(usuario.id);
+      expect(spySave).toHaveBeenCalled();
     });
 
-    it('deve lançar NotFoundException para usuario inexistente', async () => {
-      repo.findOneBy.mockResolvedValue(null);
+    it('deve lançar NotFoundException para usuário inexistente', async () => {
+      jest.spyOn(repo, 'findOneBy').mockResolvedValue(null);
 
       await expect(
-        service.update('id-inexistente', { titulo: 'Novo titulo' }),
+        service.update('id-inexistente', { nome: 'Novo nome' }),
       ).rejects.toThrow(NotFoundException);
-    });
-
-    it('deve lançar NotFoundException para curso inexistente', async () => {
-      const usuario = makeReturnedUsuario();
-      repo.findOneBy.mockResolvedValue(usuario);
-
-      const spyCursoFindOne = jest
-        .spyOn(cursosService, 'findOne')
-        .mockRejectedValue(new NotFoundException());
-
-      await expect(service.update(usuario.id, usuario)).rejects.toThrow(
-        NotFoundException,
-      );
-
-      expect(spyCursoFindOne).toHaveBeenCalledTimes(1);
-      expect(spyCursoFindOne).toHaveBeenCalledWith(usuario.cursoId);
     });
   });
 
   describe('remove', () => {
-    it('deve remover o usuario sem lançar exceção', async () => {
+    it('deve remover o usuário sem lançar exceção', async () => {
       const usuario = makeReturnedUsuario();
       const spyFindOne = jest
         .spyOn(service, 'findOne')
@@ -150,8 +182,8 @@ describe('(Unit test) UsuariosService', () => {
       expect(spyDelete).toHaveBeenCalledWith(usuario.id);
     });
 
-    it('deve lançar NotFoundException para usuario inexistente', async () => {
-      repo.findOneBy.mockResolvedValue(null);
+    it('deve lançar NotFoundException para usuário inexistente', async () => {
+      jest.spyOn(repo, 'findOneBy').mockResolvedValue(null);
 
       await expect(service.remove('id-inexistente')).rejects.toThrow(
         NotFoundException,
@@ -160,7 +192,7 @@ describe('(Unit test) UsuariosService', () => {
   });
 
   describe('findAll', () => {
-    it('deve retornar usuarios paginados', async () => {
+    it('deve retornar usuários paginados', async () => {
       const pagination: PaginationQueryDto = { page: 1, limit: 10 };
       const usuarios = [makeReturnedUsuario()];
 
