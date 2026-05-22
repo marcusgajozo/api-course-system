@@ -1,6 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany, RelationId } from 'typeorm';
 
 import { BaseEntity } from '@/common/entities/base.entity';
+import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 
 import { TemasEnum } from '../enums/temas.enum';
 
@@ -17,4 +18,10 @@ export class CursoEntity extends BaseEntity {
 
   @Column()
   urlImagem: string;
+
+  @OneToMany(() => TurmaEntity, (turma) => turma.curso)
+  turmas: TurmaEntity[];
+
+  @RelationId((curso: CursoEntity) => curso.turmas)
+  turmaIds: string[];
 }
