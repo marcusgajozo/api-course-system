@@ -11,21 +11,30 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
-import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
+import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 
 import { createTestApp } from '../utils/create-test-app';
+import {
+  beforeEachTestCurso,
+  createCurso,
+  cursoValido,
+  routeCursoApi,
+} from '../utils/cursos.util';
+import { createTurma } from '../utils/turmas.util';
 
 describe('(e2e) Cursos', () => {
   let app: INestApplication;
   let httpServer: Server;
-  let repo: Repository<CursoEntity>;
+  let cursoRepo: Repository<CursoEntity>;
+  let turmaRepo: Repository<TurmaEntity>;
 
   beforeAll(async () => {
     const testApp = await createTestApp();
 
     app = testApp.app;
     httpServer = testApp.httpServer;
-    repo = testApp.module.get(getRepositoryToken(CursoEntity));
+    cursoRepo = testApp.module.get(getRepositoryToken(CursoEntity));
+    turmaRepo = testApp.module.get(getRepositoryToken(TurmaEntity));
   });
 
   afterAll(async () => {
@@ -33,20 +42,13 @@ describe('(e2e) Cursos', () => {
   });
 
   beforeEach(async () => {
-    await repo.query('TRUNCATE TABLE cursos RESTART IDENTITY CASCADE');
+    await beforeEachTestCurso(cursoRepo);
   });
-
-  const cursoValido = {
-    titulo: 'Curso de NestJS',
-    descricao: 'Aprenda NestJS do zero',
-    temas: [TemasEnum.INOVACAO, TemasEnum.TECNOLOGIA],
-    urlImagem: 'http://example.com/nestjs.png',
-  };
 
   describe('POST /api/cursos', () => {
     it('deve criar um curso e retornar 201', async () => {
       const response = await request(httpServer)
-        .post('/api/cursos')
+        .post(routeCursoApi)
         .send(cursoValido)
         .expect(201);
 
@@ -59,7 +61,7 @@ describe('(e2e) Cursos', () => {
 
     it('deve retornar 400 com contrato de erro para body inválido', async () => {
       const response = await request(httpServer)
-        .post('/api/cursos')
+        .post(routeCursoApi)
         .send({ titulo: 'Sem outros campos' })
         .expect(400);
 
@@ -69,14 +71,14 @@ describe('(e2e) Cursos', () => {
       expect(body.error).toBe('Bad Request');
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
-      expect(body.path).toBe('/api/cursos');
+      expect(body.path).toBe(routeCursoApi);
     });
 
     it('deve retornar 400 para temas com valores inválidos', async () => {
       const cursoInvalido = { ...cursoValido, temas: ['INVALIDO'] };
 
       const response = await request(httpServer)
-        .post('/api/cursos')
+        .post(routeCursoApi)
         .send(cursoInvalido)
         .expect(400);
 
@@ -86,13 +88,13 @@ describe('(e2e) Cursos', () => {
       expect(body.error).toBe('Bad Request');
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
-      expect(body.path).toBe('/api/cursos');
+      expect(body.path).toBe(routeCursoApi);
     });
   });
 
   describe('GET /api/cursos', () => {
     it('deve retornar cursos com paginação', async () => {
-      const response = await request(httpServer).get('/api/cursos').expect(200);
+      const response = await request(httpServer).get(routeCursoApi).expect(200);
       const body = response.body as PaginatedResponseDto<CursoEntity>;
 
       expect(body.data).toBeInstanceOf(Array);
@@ -134,7 +136,7 @@ describe('(e2e) Cursos', () => {
 
   describe('GET /api/cursos/:id', () => {
     it('deve retornar um curso existente', async () => {
-      const curso = await repo.save(repo.create(cursoValido));
+      const curso = await createCurso(cursoRepo);
 
       const response = await request(httpServer)
         .get(`/api/cursos/${curso.id}`)
@@ -178,7 +180,7 @@ describe('(e2e) Cursos', () => {
 
   describe('PATCH /api/cursos/:id', () => {
     it('deve atualizar um curso existente', async () => {
-      const curso = await repo.save(repo.create(cursoValido));
+      const curso = await createCurso(cursoRepo);
       const updateData = { titulo: 'Curso atualizado' };
 
       const response = await request(httpServer)
@@ -225,13 +227,19 @@ describe('(e2e) Cursos', () => {
   });
 
   describe('DELETE /api/cursos/:id', () => {
-    it('deve deletar um curso existente e retornar 204', async () => {
-      const curso = await repo.save(repo.create(cursoValido));
+    it('deve deletar um curso existente e retornar 204 junto com turmas', async () => {
+      const turma = await createTurma(cursoRepo, turmaRepo);
+      const curso = turma.curso;
 
       await request(httpServer).delete(`/api/cursos/${curso.id}`).expect(204);
 
-      const cursoDeletado = await repo.findOneBy({ id: curso.id });
-      expect(cursoDeletado).toBeNull();
+      const deletedCurso = await cursoRepo.findOneBy({ id: curso.id });
+      const deletedTurmas = await turmaRepo.find({
+        where: { curso: { id: curso.id } },
+      });
+
+      expect(deletedCurso).toBeNull();
+      expect(deletedTurmas.length).toBe(0);
     });
 
     it('deve retornar 404 para curso inexistente', async () => {

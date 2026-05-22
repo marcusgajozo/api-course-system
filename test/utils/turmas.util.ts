@@ -21,6 +21,10 @@ export const turma: CreateTurmaDto = {
 
 export const turmaValido = structuredClone(turma);
 
+export async function beforeEachTestTurma(cursoRepo: Repository<CursoEntity>) {
+  await cursoRepo.query('TRUNCATE TABLE cursos RESTART IDENTITY CASCADE');
+}
+
 export async function createTurma(
   cursoRepo: Repository<CursoEntity>,
   turmaRepo: Repository<TurmaEntity>,
