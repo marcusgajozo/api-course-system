@@ -7,12 +7,11 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
-import { makeCurso } from '../__test__/utils/make-curso';
+import { makeCursoCreated } from '../__test__/utils/make-curso-created';
+import { makeReturnedCurso } from '../__test__/utils/make-returned-curso';
 import { CursosController } from '../controllers/cursos.controller';
-import { CreateCursoDto } from '../dtos/create-curso.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
-import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from '../services/cursos.service';
 
 describe('(Unit test) CursosController', () => {
@@ -42,14 +41,8 @@ describe('(Unit test) CursosController', () => {
 
   describe('create', () => {
     it('deve chamar service.create e retornar o curso', async () => {
-      const dto: CreateCursoDto = {
-        titulo: 'NestJS',
-        descricao: 'Curso de NestJS',
-        temas: [TemasEnum.AGRO, TemasEnum.INOVACAO],
-        urlImagem: 'http://example.com/image.png',
-      };
-
-      const curso = makeCurso(dto);
+      const dto = makeCursoCreated();
+      const curso = makeReturnedCurso(dto);
 
       const spyCreate = jest.spyOn(service, 'create').mockResolvedValue(curso);
 
@@ -62,7 +55,7 @@ describe('(Unit test) CursosController', () => {
 
   describe('findAll', () => {
     it('deve chamar service.findAll e retornar os cursos paginados', async () => {
-      const cursos = [makeCurso(), makeCurso()];
+      const cursos = [makeReturnedCurso(), makeReturnedCurso()];
       const query: PaginationQueryDto = { page: 1, limit: 10 };
 
       const expected: PaginatedResponseDto<CursoEntity> = {
@@ -86,7 +79,7 @@ describe('(Unit test) CursosController', () => {
 
   describe('findOne', () => {
     it('deve chamar service.findOne e retornar o curso', async () => {
-      const curso = makeCurso();
+      const curso = makeReturnedCurso();
       const id = '123e4567-e89b-12d3-a456-426614174000';
 
       const spyFindOne = jest
@@ -120,7 +113,7 @@ describe('(Unit test) CursosController', () => {
         descricao: 'Curso atualizado',
       };
 
-      const cursoAtualizado = makeCurso({
+      const cursoAtualizado = makeReturnedCurso({
         ...dto,
         updatedAt: new Date(),
       });

@@ -5,10 +5,9 @@ import { Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 
-import { makeCurso } from '../__test__/utils/make-curso';
-import { CreateCursoDto } from '../dtos/create-curso.dto';
+import { makeCursoCreated } from '../__test__/utils/make-curso-created';
+import { makeReturnedCurso } from '../__test__/utils/make-returned-curso';
 import { CursoEntity } from '../entities/curso.entity';
-import { TemasEnum } from '../enums/temas.enum';
 import { CursosService } from './cursos.service';
 
 describe('(Unit test) CursosService', () => {
@@ -38,15 +37,10 @@ describe('(Unit test) CursosService', () => {
 
   describe('create', () => {
     it('deve criar e retornar o curso', async () => {
-      const dto: CreateCursoDto = {
-        titulo: 'Curso de NestJS',
-        descricao: 'Aprenda NestJS do zero',
-        temas: [TemasEnum.INOVACAO],
-        urlImagem: 'http://example.com/nestjs.png',
-      };
-      const curso = makeCurso(dto);
+      const dto = makeCursoCreated();
+      const curso = makeReturnedCurso(dto);
 
-      repo.create.mockReturnValue(dto as unknown as CursoEntity);
+      repo.create.mockReturnValue(curso);
       repo.save.mockResolvedValue(curso);
 
       await expect(service.create(dto)).resolves.toEqual(curso);
@@ -55,7 +49,7 @@ describe('(Unit test) CursosService', () => {
 
   describe('findOne', () => {
     it('deve retornar o curso quando encontrado', async () => {
-      const curso = makeCurso();
+      const curso = makeReturnedCurso();
       repo.findOneBy.mockResolvedValue(curso);
 
       await expect(service.findOne(curso.id)).resolves.toEqual(curso);
@@ -72,8 +66,10 @@ describe('(Unit test) CursosService', () => {
 
   describe('update', () => {
     it('deve atualizar e retornar o curso', async () => {
-      const curso = makeCurso();
-      const cursoAtualizado = makeCurso({ titulo: 'Curso de NestJS Avançado' });
+      const curso = makeReturnedCurso();
+      const cursoAtualizado = makeReturnedCurso({
+        titulo: 'Curso de NestJS Avançado',
+      });
 
       const spyFindOne = jest
         .spyOn(service, 'findOne')
@@ -99,7 +95,7 @@ describe('(Unit test) CursosService', () => {
 
   describe('remove', () => {
     it('deve remover o curso sem lançar exceção', async () => {
-      const curso = makeCurso();
+      const curso = makeReturnedCurso();
       const spyFindOne = jest
         .spyOn(service, 'findOne')
         .mockResolvedValue(curso);
@@ -123,7 +119,7 @@ describe('(Unit test) CursosService', () => {
   describe('findAll', () => {
     it('deve retornar cursos paginados', async () => {
       const pagination: PaginationQueryDto = { page: 1, limit: 10 };
-      const cursos = [makeCurso()];
+      const cursos = [makeReturnedCurso()];
 
       const spyFindAndCount = jest
         .spyOn(repo, 'findAndCount')
