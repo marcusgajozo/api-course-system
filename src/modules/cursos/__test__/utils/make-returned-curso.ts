@@ -10,6 +10,7 @@ export const makeReturnedCurso = (
   temas: [TemasEnum.INOVACAO],
   urlImagem: 'http://example.com/nestjs.png',
   createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
   turmaIds: [],
   turmas: [],
   ...overrides,
