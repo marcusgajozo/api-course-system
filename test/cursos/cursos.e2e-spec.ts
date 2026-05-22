@@ -13,7 +13,7 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
 
-import { createTestApp } from '../setup/create-test-app';
+import { createTestApp } from '../utils/create-test-app';
 
 describe('(e2e) Cursos', () => {
   let app: INestApplication;
