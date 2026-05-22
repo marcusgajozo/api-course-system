@@ -253,4 +253,45 @@ describe('(e2e) Cursos', () => {
       expect(body.path).toBe('/api/cursos/123');
     });
   });
+
+  describe('DELETE /api/cursos/:id', () => {
+    it('deve deletar um curso existente', async () => {
+      const curso = await repo.save(repo.create(cursoValido));
+
+      await request(httpServer).delete(`/api/cursos/${curso.id}`).expect(204);
+
+      const cursoDeletado = await repo.findOneBy({ id: curso.id });
+      expect(cursoDeletado).toBeNull();
+    });
+
+    it('deve retornar 404 para curso inexistente', async () => {
+      const response = await request(httpServer)
+        .delete('/api/cursos/00000000-0000-0000-0000-000000000000')
+        .expect(404);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBe('Curso não encontrado');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(
+        '/api/cursos/00000000-0000-0000-0000-000000000000',
+      );
+    });
+
+    it('deve retornar 400 para id com formato inválido', async () => {
+      const response = await request(httpServer)
+        .delete('/api/cursos/123')
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBe('Formatação de UUID inválida');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos/123');
+    });
+  });
 });
