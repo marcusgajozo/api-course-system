@@ -25,7 +25,10 @@ export class TurmaEntity extends BaseEntity {
   @Column({ name: 'data_fim', type: 'timestamptz' })
   dataFim: Date;
 
-  @ManyToOne(() => CursoEntity, (curso) => curso.turmas, { nullable: false })
+  @ManyToOne(() => CursoEntity, (curso) => curso.turmas, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'curso_id' })
   curso: CursoEntity;
 
