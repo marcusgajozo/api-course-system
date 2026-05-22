@@ -1,4 +1,4 @@
-import { IsEnum, IsString, IsUrl } from 'class-validator';
+import { IsArray, IsEnum, IsString, IsUrl } from 'class-validator';
 
 import { TemasEnum } from '../enums/temas.enum';
 
@@ -9,6 +9,7 @@ export class CreateCursoDto {
   @IsString()
   descricao: string;
 
+  @IsArray()
   @IsEnum(TemasEnum, { each: true })
   temas: TemasEnum[];
 
