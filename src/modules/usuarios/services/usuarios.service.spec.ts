@@ -228,9 +228,50 @@ describe('(Unit test) UsuariosService', () => {
         .mockResolvedValue(undefined);
 
       await expect(service.matricular({ ...dto })).resolves.toBeUndefined();
-      expect(spyMatricularAluno).toHaveBeenCalled();
+      expect(spyMatricularAluno).toHaveBeenCalledWith(
+        usuario,
+        dto.turmasIds,
+        {} as EntityManager,
+      );
       expect(spyDataSource).toHaveBeenCalled();
       expect(spyFindOn).toHaveBeenCalled();
+    });
+
+    it('deve retornar um erro por não encontrar usuário', async () => {
+      const dto = makeMatricular();
+      const spyFindOne = jest
+        .spyOn(service, 'findOne')
+        .mockRejectedValue(new NotFoundException());
+
+      await expect(service.matricular({ ...dto })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(spyFindOne).toHaveBeenCalled();
+    });
+
+    it('deve retornar erro se transaction falhar', async () => {
+      const dto = makeMatricular();
+      const usuario = makeReturnedUsuario();
+
+      const spyFindOne = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(usuario);
+
+      (dataSource.transaction as jest.Mock).mockImplementation(
+        (cb: (manager: EntityManager) => Promise<void>) =>
+          cb({} as EntityManager),
+      );
+
+      const spyMatricularAluno = jest
+        .spyOn(turmasService, 'matricularAluno')
+        .mockRejectedValue(new ConflictException());
+
+      await expect(service.matricular({ ...dto })).rejects.toThrow(
+        ConflictException,
+      );
+
+      expect(spyMatricularAluno).toHaveBeenCalled();
+      expect(spyFindOne).toHaveBeenCalled();
     });
   });
 });
