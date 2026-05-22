@@ -15,6 +15,7 @@ import {
   PaginationQueryDto,
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
+import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
 import { CreateCursoDto } from '../dtos/create-curso.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
@@ -46,14 +47,16 @@ export class CursosController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<ResponseDto<CursoEntity>> {
+  async findOne(
+    @Param('id', IsUUIDPipe) id: string,
+  ): Promise<ResponseDto<CursoEntity>> {
     const curso = await this.cursosService.findOne(id);
     return new ResponseDto<CursoEntity>(curso);
   }
 
   @Patch(':id')
   async update(
-    @Param('id') id: string,
+    @Param('id', IsUUIDPipe) id: string,
     @Body() updateCursoDto: UpdateCursoDto,
   ): Promise<ResponseDto<CursoEntity>> {
     const updatedCurso = await this.cursosService.update(id, updateCursoDto);
@@ -62,7 +65,7 @@ export class CursosController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.cursosService.remove(id);
   }
 }
