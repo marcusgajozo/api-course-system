@@ -1,6 +1,5 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { INestApplication } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { Server } from 'http';
 import request from 'supertest';
 import { Repository } from 'typeorm';
@@ -11,10 +10,11 @@ import {
   PaginationQueryDto,
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
-import { GlobalExceptionFilter } from '@/common/filters/global-exception.filter';
 import { CursosModule } from '@/modules/cursos/cursos.module';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
+
+import { createTestApp } from '../setup/create-test-app';
 
 describe('(e2e) Cursos', () => {
   let app: INestApplication;
@@ -22,31 +22,14 @@ describe('(e2e) Cursos', () => {
   let repo: Repository<CursoEntity>;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: process.env.DATABASE as 'postgres',
-          host: process.env.DATABASE_HOST,
-          port: parseInt(process.env.DATABASE_PORT ?? ''),
-          username: process.env.DATABASE_USER,
-          password: process.env.DATABASE_PASSWORD,
-          database: process.env.DATABASE_NAME,
-          schema: process.env.DATABASE_SCHEMA,
-          entities: [CursoEntity],
-          dropSchema: true,
-          synchronize: true,
-        }),
-        CursosModule,
-      ],
-    }).compile();
+    const testApp = await createTestApp({
+      imports: [CursosModule],
+      entities: [CursoEntity],
+    });
 
-    app = module.createNestApplication();
-    app.useGlobalFilters(new GlobalExceptionFilter());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-    await app.init();
-
-    httpServer = app.getHttpServer() as Server;
-    repo = module.get(getRepositoryToken(CursoEntity));
+    app = testApp.app;
+    httpServer = testApp.httpServer;
+    repo = testApp.module.get(getRepositoryToken(CursoEntity));
   });
 
   afterAll(async () => {
@@ -94,10 +77,7 @@ describe('(e2e) Cursos', () => {
     });
 
     it('deve retornar 400 para temas com valores inválidos', async () => {
-      const cursoInvalido = {
-        ...cursoValido,
-        temas: ['INVALIDO'],
-      };
+      const cursoInvalido = { ...cursoValido, temas: ['INVALIDO'] };
 
       const response = await request(httpServer)
         .post('/api/cursos')
@@ -166,9 +146,7 @@ describe('(e2e) Cursos', () => {
 
       const body = response.body as ResponseDto<CursoEntity>;
 
-      expect(body.data).toMatchObject({
-        ...cursoValido,
-      });
+      expect(body.data).toMatchObject(cursoValido);
     });
 
     it('deve retornar 404 para curso inexistente', async () => {
@@ -205,7 +183,6 @@ describe('(e2e) Cursos', () => {
   describe('PATCH /api/cursos/:id', () => {
     it('deve atualizar um curso existente', async () => {
       const curso = await repo.save(repo.create(cursoValido));
-
       const updateData = { titulo: 'Curso atualizado' };
 
       const response = await request(httpServer)
@@ -215,10 +192,7 @@ describe('(e2e) Cursos', () => {
 
       const body = response.body as ResponseDto<CursoEntity>;
 
-      expect(body.data).toMatchObject({
-        ...cursoValido,
-        ...updateData,
-      });
+      expect(body.data).toMatchObject({ ...cursoValido, ...updateData });
     });
 
     it('deve retornar 404 para curso inexistente', async () => {
@@ -255,7 +229,7 @@ describe('(e2e) Cursos', () => {
   });
 
   describe('DELETE /api/cursos/:id', () => {
-    it('deve deletar um curso existente', async () => {
+    it('deve deletar um curso existente e retornar 204', async () => {
       const curso = await repo.save(repo.create(cursoValido));
 
       await request(httpServer).delete(`/api/cursos/${curso.id}`).expect(204);
