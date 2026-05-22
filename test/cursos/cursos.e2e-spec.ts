@@ -92,6 +92,26 @@ describe('(e2e) Cursos', () => {
       expect(body.timestamp).toBeDefined();
       expect(body.path).toBe('/api/cursos');
     });
+
+    it('deve retornar 400 para temas com valores inválidos', async () => {
+      const cursoInvalido = {
+        ...cursoValido,
+        temas: ['INVALIDO'],
+      };
+
+      const response = await request(httpServer)
+        .post('/api/cursos')
+        .send(cursoInvalido)
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos');
+    });
   });
 
   describe('GET /api/cursos', () => {
@@ -170,6 +190,58 @@ describe('(e2e) Cursos', () => {
     it('deve retornar 400 para id com formato inválido', async () => {
       const response = await request(httpServer)
         .get('/api/cursos/123')
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBe('Formatação de UUID inválida');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe('/api/cursos/123');
+    });
+  });
+
+  describe('PATCH /api/cursos/:id', () => {
+    it('deve atualizar um curso existente', async () => {
+      const curso = await repo.save(repo.create(cursoValido));
+
+      const updateData = { titulo: 'Curso atualizado' };
+
+      const response = await request(httpServer)
+        .patch(`/api/cursos/${curso.id}`)
+        .send(updateData)
+        .expect(200);
+
+      const body = response.body as ResponseDto<CursoEntity>;
+
+      expect(body.data).toMatchObject({
+        ...cursoValido,
+        ...updateData,
+      });
+    });
+
+    it('deve retornar 404 para curso inexistente', async () => {
+      const response = await request(httpServer)
+        .patch('/api/cursos/00000000-0000-0000-0000-000000000000')
+        .send({ titulo: 'Teste' })
+        .expect(404);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBe('Curso não encontrado');
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(
+        '/api/cursos/00000000-0000-0000-0000-000000000000',
+      );
+    });
+
+    it('deve retornar 400 para id com formato inválido', async () => {
+      const response = await request(httpServer)
+        .patch('/api/cursos/123')
+        .send({ titulo: 'Teste' })
         .expect(400);
 
       const body = response.body as ErrorResponseDto;
