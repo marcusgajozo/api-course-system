@@ -382,7 +382,7 @@ describe('(e2e) Usuários', () => {
       expect(turmaDeletado).toBeNull();
     });
 
-    it('deve retornar 404 para turma inexistente', async () => {
+    it('deve retornar 404 para usuário inexistente', async () => {
       const usuarioId = faker.string.uuid();
 
       const response = await request(httpServer).delete(
