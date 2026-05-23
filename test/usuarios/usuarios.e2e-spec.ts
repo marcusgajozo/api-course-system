@@ -311,4 +311,62 @@ describe('(e2e) Usuários', () => {
       expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
     });
   });
+
+  describe(`GET ${routeUsuarioApi}/:id`, () => {
+    it('deve retornar um usuário existente', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      const response = await request(httpServer)
+        .get(`${routeUsuarioApi}/${usuario.id}`)
+        .expect(200);
+
+      const body = response.body as ResponseDto<UsuarioEntity>;
+
+      const {
+        turmas: _,
+        createdAt: __,
+        updatedAt: ___,
+        ...expectedData
+      } = usuario;
+
+      expect(body.data).toMatchObject({
+        ...expectedData,
+      });
+
+      expect(body.data.createdAt).toBeDefined();
+      expect(body.data.updatedAt).toBeDefined();
+    });
+
+    it('deve retornar 404 para usuário inexistente', async () => {
+      const usuarioId = faker.string.uuid();
+
+      const response = await request(httpServer).get(
+        `${routeUsuarioApi}/${usuarioId}`,
+      );
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+
+    it('deve retornar 400 para ID com formato inválido', async () => {
+      const usuarioId = '123';
+
+      const response = await request(httpServer).get(
+        `${routeUsuarioApi}/${usuarioId}`,
+      );
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+  });
 });
