@@ -369,4 +369,49 @@ describe('(e2e) Usuários', () => {
       expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
     });
   });
+
+  describe(`DELETE ${routeUsuarioApi}/:id`, () => {
+    it('deve deletar um usuário existente e retornar 204', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      await request(httpServer)
+        .delete(`${routeUsuarioApi}/${usuario.id}`)
+        .expect(204);
+
+      const turmaDeletado = await usuarioRepo.findOneBy({ id: usuario.id });
+      expect(turmaDeletado).toBeNull();
+    });
+
+    it('deve retornar 404 para turma inexistente', async () => {
+      const usuarioId = faker.string.uuid();
+
+      const response = await request(httpServer).delete(
+        `${routeUsuarioApi}/${usuarioId}`,
+      );
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+
+    it('deve retornar 400 para id com formato inválido', async () => {
+      const usuarioId = '123';
+
+      const response = await request(httpServer).delete(
+        `${routeUsuarioApi}/${usuarioId}`,
+      );
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+  });
 });
