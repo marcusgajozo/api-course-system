@@ -12,6 +12,7 @@ import {
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { createTestApp } from '../utils/create-test-app';
 import { createCurso } from '../utils/cursos.util';
@@ -21,12 +22,14 @@ import {
   routeTurmaApi,
   turmaValido,
 } from '../utils/turmas.util';
+import { createUsuario } from '../utils/usuarios.util';
 
 describe('(e2e) Turmas', () => {
   let app: INestApplication;
   let httpServer: Server;
   let turmaRepo: Repository<TurmaEntity>;
   let cursoRepo: Repository<CursoEntity>;
+  let usuarioRepo: Repository<UsuarioEntity>;
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -35,6 +38,7 @@ describe('(e2e) Turmas', () => {
     httpServer = testApp.httpServer;
     turmaRepo = testApp.module.get(getRepositoryToken(TurmaEntity));
     cursoRepo = testApp.module.get(getRepositoryToken(CursoEntity));
+    usuarioRepo = testApp.module.get(getRepositoryToken(UsuarioEntity));
   });
 
   afterAll(async () => {
@@ -313,6 +317,25 @@ describe('(e2e) Turmas', () => {
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
       expect(body.path).toBe('/api/turmas/123');
+    });
+  });
+
+  describe('GET /api/turmas/usuarios/:id', () => {
+    it('deve retornar as turmas do usuário com paginação', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      const response = await request(httpServer)
+        .get(`/api/turmas/usuarios/${usuario.id}`)
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<TurmaEntity>;
+
+      expect(body.data).toBeInstanceOf(Array);
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      expect(body.data[0].id).toBe(usuario.turmas[0].id);
+      expect(body.meta).toBeDefined();
+      expect(body.meta.page).toBe(1);
+      expect(body.meta.limit).toBe(10);
     });
   });
 });
