@@ -99,6 +99,13 @@ export class TurmasController {
   }
 
   @Get('/usuarios/:id')
+  @ApiOperation({ summary: 'Listar turmas matriculadas de um usuário' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de turmas retornada com sucesso',
+  })
+  @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
+  @ApiParam({ name: 'id', description: 'ID do usuário (UUID)' })
   async findAllTurmasUsuario(
     @Param('id', IsUUIDPipe) usuarioId: string,
     @Query() query: PaginationQueryDto,
