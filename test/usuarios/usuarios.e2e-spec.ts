@@ -14,6 +14,7 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
+import { MatricularDto } from '@/modules/usuarios/dtos/matricular.dto';
 import { UpdateUsuarioDto } from '@/modules/usuarios/dtos/update-usuario.dto';
 import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
@@ -412,6 +413,91 @@ describe('(e2e) Usuários', () => {
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
       expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+  });
+
+  describe(`POST ${routeUsuarioApi}/matricular`, () => {
+    it('deve matricular usuario na turma e retornar 204', async () => {
+      const turmasIds: string[] = [];
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      for (let i = 0; i < 3; i++) {
+        const turma = await createTurma(cursoRepo, turmaRepo);
+        turmasIds.push(turma.id);
+      }
+
+      const usuarioDto: MatricularDto = {
+        turmasIds,
+        usuarioId: usuario.id,
+      };
+
+      await request(httpServer)
+        .post(`${routeUsuarioApi}/matricular`)
+        .send(usuarioDto)
+        .expect(204);
+    });
+
+    it('deve retornar um erro se a matricula de 1 materia falhar e manter o usuario apenas com suas matriculas anteriores', async () => {
+      const turmas: TurmaEntity[] = [];
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      for (let i = 0; i < 3; i++) {
+        const turma = await createTurma(cursoRepo, turmaRepo);
+        turmas.push(turma);
+      }
+
+      await turmaRepo.update(turmas[0].id, {
+        status: TurmaStatusEnum.ENCERRADO,
+      });
+
+      const usuarioDto: MatricularDto = {
+        turmasIds: turmas.map((item) => item.id),
+        usuarioId: usuario.id,
+      };
+
+      const result = await request(httpServer)
+        .post(`${routeUsuarioApi}/matricular`)
+        .send(usuarioDto);
+
+      const body = result.body as ErrorResponseDto;
+
+      const usuarioFindOneBy = await usuarioRepo.findOneBy({ id: usuario.id });
+
+      expect(body.statusCode).toBe(409);
+      expect(usuarioFindOneBy?.turmasIds.length).toBe(1);
+    });
+
+    it('deve impedir usuário de matricular em turma do mesmo curso que já é matriculado', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+      const turma = await createTurma(cursoRepo, turmaRepo);
+
+      const turmaUsuario = await turmaRepo.findOneBy({
+        id: usuario.turmasIds[0],
+      });
+
+      await turmaRepo.update(turma.id, {
+        curso: { id: turmaUsuario?.cursoId },
+      });
+
+      const curso = await cursoRepo.findOneBy({
+        id: turmaUsuario?.cursoId,
+      });
+
+      const usuarioDto: MatricularDto = {
+        turmasIds: [turma.id],
+        usuarioId: usuario.id,
+      };
+
+      const result = await request(httpServer)
+        .post(`${routeUsuarioApi}/matricular`)
+        .send(usuarioDto);
+
+      const body = result.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(409);
+      expect(body.message).toBe(
+        `Usuário já está matriculado na turma "${curso?.titulo}" deste curso.`,
+      );
     });
   });
 });
