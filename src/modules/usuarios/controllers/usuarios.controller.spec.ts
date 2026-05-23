@@ -53,14 +53,14 @@ describe('(Unit test) UsuariosController', () => {
       expect(spyCreate).toHaveBeenCalledWith(dto);
     });
 
-    it('deve lançar erro se curso não for encontrado', async () => {
+    it('deve lançar erro se criar conta informando turma indisponível', async () => {
       const dto = makeUsuarioCreated();
 
       const spyCreate = jest
         .spyOn(service, 'create')
-        .mockRejectedValue(new NotFoundException());
+        .mockRejectedValue(new Error());
 
-      await expect(controller.create(dto)).rejects.toThrow(NotFoundException);
+      await expect(controller.create(dto)).rejects.toThrow(Error);
       expect(spyCreate).toHaveBeenCalledWith(dto);
     });
   });
