@@ -14,6 +14,7 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
+import { CancelarMatriculaDto } from '@/modules/usuarios/dtos/cancelar-matricula.dto';
 import { MatricularDto } from '@/modules/usuarios/dtos/matricular.dto';
 import { UpdateUsuarioDto } from '@/modules/usuarios/dtos/update-usuario.dto';
 import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
@@ -498,6 +499,31 @@ describe('(e2e) Usuários', () => {
       expect(body.message).toBe(
         `Usuário já está matriculado na turma "${curso?.titulo}" deste curso.`,
       );
+    });
+  });
+
+  describe(`POST ${routeUsuarioApi}/cancelar-matricula`, () => {
+    it('deve cancelar a matricula do aluno e retornar 204', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      expect(usuario.turmasIds.length).toBe(1);
+
+      const cancelarDto: CancelarMatriculaDto = {
+        usuarioId: usuario.id,
+        turmasIds: usuario.turmasIds,
+      };
+
+      await request(httpServer)
+        .post(`${routeUsuarioApi}/cancelar-matricula`)
+        .send(cancelarDto)
+        .expect(204);
+
+      const usuarioAtualizado = await usuarioRepo.findOne({
+        where: { id: usuario.id },
+        relations: { turmas: true },
+      });
+
+      expect(usuarioAtualizado?.turmas.length).toBe(0);
     });
   });
 });
