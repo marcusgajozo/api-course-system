@@ -8,6 +8,8 @@ import { CursosModule } from '@/modules/cursos/cursos.module';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 import { TurmasModule } from '@/modules/turmas/turmas.module';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
+import { UsuariosModule } from '@/modules/usuarios/usuarios.module';
 
 interface TestApp {
   app: INestApplication;
@@ -26,12 +28,13 @@ export async function createTestApp(): Promise<TestApp> {
         password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
         schema: process.env.DATABASE_SCHEMA,
-        entities: [TurmaEntity, CursoEntity],
+        entities: [TurmaEntity, CursoEntity, UsuarioEntity],
         dropSchema: true,
         synchronize: true,
       }),
       TurmasModule,
       CursosModule,
+      UsuariosModule,
     ],
   }).compile();
 

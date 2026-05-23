@@ -1,0 +1,189 @@
+import { INestApplication } from '@nestjs/common';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Server } from 'http';
+import request from 'supertest';
+import { Repository } from 'typeorm';
+
+import { ErrorResponseDto } from '@/common/dtos/error-response.dto';
+import { ResponseDto } from '@/common/dtos/response.dto';
+import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
+import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
+import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
+
+import { createTestApp } from '../utils/create-test-app';
+import { createTurma } from '../utils/turmas.util';
+import {
+  beforeEachTestUsuario,
+  routeUsuarioApi,
+  usuarioValido,
+} from '../utils/usuarios.util';
+
+describe('(e2e) Turmas', () => {
+  let app: INestApplication;
+  let httpServer: Server;
+  let turmaRepo: Repository<TurmaEntity>;
+  let cursoRepo: Repository<CursoEntity>;
+  let usuarioRepo: Repository<UsuarioEntity>;
+
+  beforeAll(async () => {
+    const testApp = await createTestApp();
+
+    app = testApp.app;
+    httpServer = testApp.httpServer;
+    turmaRepo = testApp.module.get(getRepositoryToken(TurmaEntity));
+    cursoRepo = testApp.module.get(getRepositoryToken(CursoEntity));
+    usuarioRepo = testApp.module.get(getRepositoryToken(UsuarioEntity));
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  beforeEach(async () => {
+    await beforeEachTestUsuario(usuarioRepo, cursoRepo);
+  });
+
+  describe(`POST ${routeUsuarioApi}`, () => {
+    it('deve criar um usuario sem turma e retornar 201', async () => {
+      const { turmasIds: _, ...rest } = usuarioValido;
+
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(rest)
+        .expect(201);
+
+      const body = response.body as ResponseDto<UsuarioEntity>;
+
+      expect(body.data).toMatchObject(rest);
+      expect(body.data.id).toBeDefined();
+      expect(body.data.createdAt).toBeDefined();
+    });
+
+    it('deve criar um usuario com turma e retornar 201', async () => {
+      const dataInicio = new Date();
+      dataInicio.setDate(dataInicio.getDate() - 1);
+
+      const dataFim = new Date();
+      dataFim.setDate(dataFim.getDate() + 10);
+
+      const turma = await createTurma(cursoRepo, turmaRepo, {
+        dataFim,
+        dataInicio,
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 10,
+      });
+
+      const usuario = { ...usuarioValido };
+      usuario.turmasIds = [turma.id];
+
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(usuario)
+        .expect(201);
+
+      const body = response.body as ResponseDto<UsuarioEntity>;
+
+      expect(body.data).toMatchObject(usuario);
+      expect(body.data.id).toBeDefined();
+      expect(body.data.createdAt).toBeDefined();
+    });
+
+    it('deve criar um usuario com turma inexistente e retornar 404', async () => {
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(usuarioValido);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBe(
+        `Turma ${usuarioValido.turmasIds?.[0]} não encontrada`,
+      );
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(routeUsuarioApi);
+    });
+
+    it('deve criar um usuario com turma indisponível e retornar 409', async () => {
+      const turma = await createTurma(cursoRepo, turmaRepo);
+      await turmaRepo.update(turma.id, { status: TurmaStatusEnum.ENCERRADO });
+
+      const usuario = structuredClone(usuarioValido);
+      usuario.turmasIds = [turma.id];
+
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(usuario)
+        .expect(409);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(409);
+      expect(body.error).toBe('Conflict');
+      expect(body.message).toBe(
+        `Turma "${turma.titulo}" não está disponível para matrícula`,
+      );
+    });
+
+    it('deve criar um usuario com turma sem vaga para matricula e retornar 422', async () => {
+      const dataInicio = new Date();
+      dataInicio.setDate(dataInicio.getDate() - 1);
+
+      const dataFim = new Date();
+      dataFim.setDate(dataFim.getDate() + 10);
+
+      const turma = await createTurma(cursoRepo, turmaRepo, {
+        dataFim,
+        dataInicio,
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 0,
+      });
+
+      const usuario = structuredClone(usuarioValido);
+      usuario.turmasIds = [turma.id];
+
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(usuario);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(422);
+      expect(body.error).toBe('Unprocessable Entity');
+      expect(body.message).toBe(
+        `Turma "${turma.titulo}" sem vagas disponíveis`,
+      );
+    });
+
+    it('deve criar um usuario com turma fora do período de matricula e retornar 422', async () => {
+      const dataInicio = new Date();
+      dataInicio.setDate(dataInicio.getDate() + 1);
+
+      const dataFim = new Date();
+      dataFim.setDate(dataFim.getDate() + 10);
+
+      const turma = await createTurma(cursoRepo, turmaRepo, {
+        dataFim,
+        dataInicio,
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 10,
+      });
+
+      const usuario = structuredClone(usuarioValido);
+      usuario.turmasIds = [turma.id];
+
+      const response = await request(httpServer)
+        .post(routeUsuarioApi)
+        .send(usuario);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(422);
+      expect(body.error).toBe('Unprocessable Entity');
+      expect(body.message).toBe(
+        `Matrícula para a turma "${turma.titulo}" fora do período permitido`,
+      );
+    });
+  });
+});

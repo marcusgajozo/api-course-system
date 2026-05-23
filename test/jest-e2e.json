@@ -10,5 +10,6 @@
   },
   "testEnvironment": "node",
   "globalSetup": "<rootDir>/test/setup/global-setup.ts",
-  "setupFiles": ["<rootDir>/test/setup/setup-env.ts"]
+  "setupFiles": ["<rootDir>/test/setup/setup-env.ts"],
+  "transformIgnorePatterns": ["node_modules/\\.pnpm/(?!@faker-js)"]
 }

@@ -28,9 +28,10 @@ export async function beforeEachTestTurma(cursoRepo: Repository<CursoEntity>) {
 export async function createTurma(
   cursoRepo: Repository<CursoEntity>,
   turmaRepo: Repository<TurmaEntity>,
+  turmaDto?: Partial<CreateTurmaDto>,
 ) {
   const curso = await createCurso(cursoRepo);
   return await turmaRepo.save(
-    turmaRepo.create({ ...turma, curso: { id: curso.id } }),
+    turmaRepo.create({ ...{ ...turma, ...turmaDto }, curso: { id: curso.id } }),
   );
 }
