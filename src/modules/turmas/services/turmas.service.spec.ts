@@ -1,21 +1,24 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { makeReturnedCurso } from '@/modules/cursos/__test__/utils/make-returned-curso';
 import { CursosService } from '@/modules/cursos/services/cursos.service';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { makeReturnedTurma } from '../__test__/utils/make-returned-turma';
 import { makeTurmaCreated } from '../__test__/utils/make-turma-created';
 import { TurmaEntity } from '../entities/turma.entity';
+import { TurmaStatusEnum } from '../enums/turma-status.enum';
 import { TurmasService } from './turmas.service';
 
 describe('(Unit test) TurmasService', () => {
   let service: TurmasService;
   let repo: jest.Mocked<Repository<TurmaEntity>>;
   let cursosService: jest.Mocked<CursosService>;
+  let defaultManager: jest.Mocked<EntityManager>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +32,8 @@ describe('(Unit test) TurmasService', () => {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
+            createQueryBuilder: jest.fn(),
+            findOne: jest.fn(),
           },
         },
         {
@@ -42,6 +47,7 @@ describe('(Unit test) TurmasService', () => {
           useValue: {
             create: jest.fn(),
             save: jest.fn(),
+            findOne: jest.fn(),
           },
         },
       ],
@@ -50,6 +56,7 @@ describe('(Unit test) TurmasService', () => {
     service = module.get(TurmasService);
     repo = module.get(getRepositoryToken(TurmaEntity));
     cursosService = module.get(CursosService);
+    defaultManager = module.get(EntityManager);
   });
 
   describe('create', () => {
@@ -182,5 +189,105 @@ describe('(Unit test) TurmasService', () => {
     });
   });
 
-  describe('matricularAluno', () => {});
+  describe('matricularAluno', () => {
+    it('deve matricular o aluno com sucesso deixa turma com status DISPONÍVEL', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const turma = makeReturnedTurma({
+        status: TurmaStatusEnum.DISPONIVEL,
+        dataFim: tomorrow,
+        quantidadeVagas: 10,
+      });
+
+      turma.usuarios = [];
+
+      const spyFindOne = jest
+        .spyOn(defaultManager, 'findOne')
+        .mockResolvedValue(turma);
+
+      const spySave = jest
+        .spyOn(defaultManager, 'save')
+        .mockResolvedValue(turma);
+
+      await expect(
+        service.matricularAluno(usuario, [turma.id]),
+      ).resolves.toBeUndefined();
+
+      expect(spyFindOne).toHaveBeenCalledWith(TurmaEntity, {
+        where: { id: turma.id },
+        relations: { usuarios: true },
+      });
+      expect(turma.usuarios).toContain(usuario);
+      expect(spySave).toHaveBeenCalledWith(TurmaEntity, turma);
+      expect(turma.status).toBe(TurmaStatusEnum.DISPONIVEL);
+    });
+
+    it('deve lançar NotFoundException se a turma não for encontrada', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+
+      defaultManager.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.matricularAluno(usuario, ['turma-inexistente']),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('deve lançar ConflictException se a turma não estiver disponível', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+      const turma = makeReturnedTurma({
+        status: TurmaStatusEnum.ENCERRADO,
+      });
+
+      defaultManager.findOne.mockResolvedValue(turma);
+
+      await expect(
+        service.matricularAluno(usuario, [turma.id]),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('deve lançar ConflictException se a turma não tiver vagas disponíveis', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+      const turma = makeReturnedTurma({
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 1,
+      });
+      turma.usuarios = [{ id: 'usuario-2' } as UsuarioEntity];
+
+      defaultManager.findOne.mockResolvedValue(turma);
+
+      await expect(
+        service.matricularAluno(usuario, [turma.id]),
+      ).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('cancelarMatriculaAluno', () => {
+    it('deve cancelar a matrícula do aluno nas turmas informadas', async () => {
+      const usuarioId = 'usuario-uuid-1';
+      const turmasIds = ['turma-uuid-1', 'turma-uuid-2'];
+      const turma = makeReturnedTurma();
+
+      const mockRemove = jest.fn().mockResolvedValue(undefined);
+
+      jest.spyOn(repo, 'createQueryBuilder').mockReturnValue({
+        relation: jest.fn().mockReturnValue({
+          of: jest.fn().mockReturnValue({
+            remove: mockRemove,
+          }),
+        }),
+      } as unknown as SelectQueryBuilder<TurmaEntity>);
+
+      repo.findOne.mockResolvedValue(turma);
+      repo.save.mockResolvedValue(turma);
+
+      await expect(
+        service.cancelarMatriculaAluno(usuarioId, turmasIds),
+      ).resolves.toBeUndefined();
+
+      expect(mockRemove).toHaveBeenCalledWith(turmasIds);
+    });
+  });
 });

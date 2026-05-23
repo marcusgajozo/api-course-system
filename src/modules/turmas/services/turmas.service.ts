@@ -108,7 +108,40 @@ export class TurmasService {
       }
 
       turma.usuarios.push(usuario);
+      this.atualizaStatusTurma(turma);
+
       await currentManager.save(TurmaEntity, turma);
+    }
+  }
+
+  async cancelarMatriculaAluno(usuarioId: string, turmasIds: string[]) {
+    await this.turmaRepository
+      .createQueryBuilder()
+      .relation(UsuarioEntity, 'turmas')
+      .of(usuarioId)
+      .remove(turmasIds);
+
+    for (const turmaId of turmasIds) {
+      const turma = await this.turmaRepository.findOne({
+        where: { id: turmaId },
+        relations: { usuarios: true },
+      });
+
+      if (turma) {
+        this.atualizaStatusTurma(turma);
+        await this.turmaRepository.save(turma);
+      }
+    }
+  }
+
+  private atualizaStatusTurma(turma: TurmaEntity): void {
+    if (
+      turma.usuarios.length >= turma.quantidadeVagas ||
+      turma.dataFim <= new Date()
+    ) {
+      turma.status = TurmaStatusEnum.ENCERRADO;
+    } else {
+      turma.status = TurmaStatusEnum.DISPONIVEL;
     }
   }
 }
