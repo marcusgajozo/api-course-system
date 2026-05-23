@@ -5,7 +5,7 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager, In, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
@@ -139,22 +139,39 @@ export class TurmasService {
   }
 
   async cancelarMatriculaAluno(usuarioId: string, turmasIds: string[]) {
-    await this.turmaRepository
-      .createQueryBuilder()
-      .relation(UsuarioEntity, 'turmas')
-      .of(usuarioId)
-      .remove(turmasIds);
+    const turmasQueFalharam: string[] = [];
 
     for (const turmaId of turmasIds) {
-      const turma = await this.turmaRepository.findOne({
-        where: { id: turmaId },
-        relations: { usuarios: true },
+      try {
+        await this.turmaRepository
+          .createQueryBuilder()
+          .relation(UsuarioEntity, 'turmas')
+          .of(usuarioId)
+          .remove(turmaId);
+
+        const turma = await this.turmaRepository.findOne({
+          where: { id: turmaId },
+          relations: { usuarios: true },
+        });
+
+        if (turma) {
+          this.atualizaStatusTurma(turma);
+          await this.turmaRepository.save(turma);
+        }
+      } catch {
+        turmasQueFalharam.push(turmaId);
+      }
+    }
+
+    if (turmasQueFalharam.length > 0) {
+      const turmasAindaInscritas = await this.turmaRepository.find({
+        where: { id: In(turmasQueFalharam) },
       });
 
-      if (turma) {
-        this.atualizaStatusTurma(turma);
-        await this.turmaRepository.save(turma);
-      }
+      const titulos = turmasAindaInscritas.map((t) => t.titulo).join(', ');
+      throw new UnprocessableEntityException(
+        `Ocorreu um erro ao cancelar a matrícula. O usuário ainda está inscrito na(s) turma(s): ${titulos}`,
+      );
     }
   }
 

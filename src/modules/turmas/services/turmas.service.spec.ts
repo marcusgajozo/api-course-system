@@ -349,7 +349,7 @@ describe('(Unit test) TurmasService', () => {
         service.cancelarMatriculaAluno(usuarioId, turmasIds),
       ).resolves.toBeUndefined();
 
-      expect(mockRemove).toHaveBeenCalledWith(turmasIds);
+      expect(mockRemove).toHaveBeenCalledWith(turmasIds[0]);
     });
   });
 });
