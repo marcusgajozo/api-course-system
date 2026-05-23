@@ -6,7 +6,7 @@ import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { CreateCursoDto } from '../dtos/create-curso.dto';
-import { FilterQueryDto } from '../dtos/filter-query.dto';
+import { CursosQueryDto } from '../dtos/filter-query.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 
@@ -55,7 +55,7 @@ export class CursosService {
   }
 
   async findAllCursosTurmaDisponivel(
-    query: PaginationQueryDto & FilterQueryDto,
+    query: CursosQueryDto,
   ): Promise<[CursoEntity[], number]> {
     const { page, limit, temas, titulo } = query;
 

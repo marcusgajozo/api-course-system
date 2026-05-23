@@ -27,6 +27,7 @@ describe('(Unit test) CursosController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findAllCursosTurmaDisponivel: jest.fn(),
             findOne: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
@@ -139,6 +140,32 @@ describe('(Unit test) CursosController', () => {
 
       await expect(controller.remove(id)).resolves.toBeUndefined();
       expect(spyServiceRemove).toHaveBeenCalledWith(id);
+    });
+  });
+
+  describe('findAllCursosTurmaDisponivel', () => {
+    it('deve chamar service.findAllCursosTurmaDisponivel e retornar os cursos', async () => {
+      const cursos = [makeReturnedCurso()];
+      const query = { page: 1, limit: 10, titulo: 'Avançado' };
+
+      const expected = {
+        data: cursos,
+        meta: {
+          page: 1,
+          limit: 10,
+          totalCount: 1,
+          totalPages: 1,
+        },
+      };
+
+      const spyFind = jest
+        .spyOn(service, 'findAllCursosTurmaDisponivel')
+        .mockResolvedValue([cursos, 1]);
+
+      await expect(
+        controller.findAllCursosTurmaDisponivel(query),
+      ).resolves.toEqual(expected);
+      expect(spyFind).toHaveBeenCalledWith(query);
     });
   });
 });

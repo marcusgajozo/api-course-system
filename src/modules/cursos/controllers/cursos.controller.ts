@@ -19,12 +19,13 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
 import { CreateCursoDto } from '../dtos/create-curso.dto';
+import { CursosQueryDto } from '../dtos/filter-query.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { CursosService } from '../services/cursos.service';
 
 @ApiTags('Cursos')
-@Controller('api/cursos')
+@Controller('/api/cursos')
 export class CursosController {
   constructor(private readonly cursosService: CursosService) {}
 
@@ -53,6 +54,29 @@ export class CursosController {
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<CursoEntity>> {
     const [cursos, totalCount] = await this.cursosService.findAll(query);
+    return new PaginatedResponseDto<CursoEntity>(cursos, {
+      page: query.page,
+      limit: query.limit,
+      totalCount: totalCount,
+    });
+  }
+
+  @Get('/disponiveis')
+  @ApiOperation({ summary: 'Listar cursos com turmas disponíveis' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de cursos retornada com sucesso',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros de paginação inválidos',
+  })
+  async findAllCursosTurmaDisponivel(
+    @Query() query: CursosQueryDto,
+  ): Promise<PaginatedResponseDto<CursoEntity>> {
+    const [cursos, totalCount] =
+      await this.cursosService.findAllCursosTurmaDisponivel(query);
+
     return new PaginatedResponseDto<CursoEntity>(cursos, {
       page: query.page,
       limit: query.limit,
