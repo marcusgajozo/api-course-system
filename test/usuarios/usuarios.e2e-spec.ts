@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Server } from 'http';
@@ -13,12 +14,14 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
+import { UpdateUsuarioDto } from '@/modules/usuarios/dtos/update-usuario.dto';
 import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { createTestApp } from '../utils/create-test-app';
 import { createTurma } from '../utils/turmas.util';
 import {
   beforeEachTestUsuario,
+  createUsuario,
   routeUsuarioApi,
   usuarioValido,
 } from '../utils/usuarios.util';
@@ -236,6 +239,76 @@ describe('(e2e) Usuários', () => {
       expect(body.path).toBe(
         `${routeUsuarioApi}?page=${query.page}&limit=${query.limit}`,
       );
+    });
+  });
+
+  describe(`PATCH ${routeUsuarioApi}/:id`, () => {
+    it('deve atualizar um usuário existente e retornar 200', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+      const updateData: UpdateUsuarioDto = { nome: 'Nome atualizado' };
+
+      const response = await request(httpServer)
+        .patch(`${routeUsuarioApi}/${usuario.id}`)
+        .send(updateData)
+        .expect(200);
+
+      const body = response.body as ResponseDto<TurmaEntity>;
+
+      expect(body.data).toMatchObject({
+        ...updateData,
+      });
+    });
+
+    it('deve retornar 400 para dados com formatos inválido', async () => {
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+      const updateData = { nome: 1 };
+
+      const response = await request(httpServer)
+        .patch(`${routeUsuarioApi}/${usuario.id}`)
+        .send(updateData);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuario.id}`);
+    });
+
+    it('deve retornar 404 para turma inexistente', async () => {
+      const usuarioId = faker.string.uuid();
+      const updateData: UpdateUsuarioDto = { nome: 'Nome atualizado' };
+
+      const response = await request(httpServer)
+        .patch(`${routeUsuarioApi}/${usuarioId}`)
+        .send(updateData);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(404);
+      expect(body.error).toBe('Not Found');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
+    });
+
+    it('deve retornar 400 para id com formato inválido', async () => {
+      const usuarioId = 222;
+      const updateData: UpdateUsuarioDto = { nome: 'Nome atualizado' };
+
+      const response = await request(httpServer)
+        .patch(`${routeUsuarioApi}/${usuarioId}`)
+        .send(updateData)
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(`${routeUsuarioApi}/${usuarioId}`);
     });
   });
 });

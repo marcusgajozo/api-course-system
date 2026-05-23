@@ -203,7 +203,7 @@ describe('(e2e) Turmas', () => {
   });
 
   describe('PATCH /api/turmas/:id', () => {
-    it('deve atualizar um turma existente', async () => {
+    it('deve atualizar uma turma existente', async () => {
       const turma = await createTurma(cursoRepo, turmaRepo);
       const updateData = { titulo: 'Turma atualizada' };
 
