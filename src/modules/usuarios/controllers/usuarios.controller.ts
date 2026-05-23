@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
   PaginatedResponseDto,
@@ -24,11 +25,21 @@ import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
 import { UsuariosService } from '../services/usuarios.service';
 
+@ApiTags('Usuários')
 @Controller('/api/usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Criar um novo usuário' })
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
+  @ApiResponse({ status: 409, description: 'Conflito de matrícula' })
+  @ApiResponse({
+    status: 422,
+    description: 'Turma sem vagas ou fora do período',
+  })
   async create(
     @Body() createUsuarioDto: CreateUsuarioDto,
   ): Promise<ResponseDto<UsuarioEntity>> {
@@ -37,6 +48,15 @@ export class UsuariosController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar usuários com paginação' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de usuários retornada com sucesso',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros de paginação inválidos',
+  })
   async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<UsuarioEntity>> {
@@ -49,6 +69,11 @@ export class UsuariosController {
   }
 
   @Get('/:id')
+  @ApiOperation({ summary: 'Buscar usuário por ID' })
+  @ApiParam({ name: 'id', description: 'ID do usuário (UUID)' })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado' })
+  @ApiResponse({ status: 400, description: 'ID inválido' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async findOne(
     @Param('id', IsUUIDPipe) id: string,
   ): Promise<ResponseDto<UsuarioEntity>> {
@@ -57,6 +82,11 @@ export class UsuariosController {
   }
 
   @Patch('/:id')
+  @ApiOperation({ summary: 'Atualizar usuário' })
+  @ApiParam({ name: 'id', description: 'ID do usuário (UUID)' })
+  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async update(
     @Param('id', IsUUIDPipe) id: string,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
@@ -70,18 +100,34 @@ export class UsuariosController {
 
   @Delete('/:id')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Remover usuário' })
+  @ApiParam({ name: 'id', description: 'ID do usuário (UUID)' })
+  @ApiResponse({ status: 204, description: 'Usuário removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.usuariosService.remove(id);
   }
 
   @Post('/matricular')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Matricular usuário em turmas' })
+  @ApiResponse({ status: 204, description: 'Matrícula realizada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário ou turma não encontrada' })
+  @ApiResponse({ status: 409, description: 'Conflito de matrícula' })
+  @ApiResponse({
+    status: 422,
+    description: 'Turma sem vagas ou fora do período',
+  })
   async matricular(@Body() matricularDto: MatricularDto): Promise<void> {
     return this.usuariosService.matricular(matricularDto);
   }
 
   @Post('/cancelar-matricula')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Cancelar matrícula do usuário em turmas' })
+  @ApiResponse({ status: 204, description: 'Matrícula cancelada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @ApiResponse({ status: 422, description: 'Erro ao cancelar matrícula' })
   async cancelarMatricula(
     @Body() cancelarMatriculaDto: CancelarMatriculaDto,
   ): Promise<void> {

@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
   PaginatedResponseDto,
@@ -22,11 +23,16 @@ import { UpdateTurmaDto } from '../dtos/update-turma.dto';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmasService } from '../services/turmas.service';
 
+@ApiTags('Turmas')
 @Controller('api/turmas')
 export class TurmasController {
   constructor(private readonly turmasService: TurmasService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Criar uma nova turma' })
+  @ApiResponse({ status: 201, description: 'Turma criada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
   async create(
     @Body() createTurmaDto: CreateTurmaDto,
   ): Promise<ResponseDto<TurmaEntity>> {
@@ -35,6 +41,15 @@ export class TurmasController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar turmas com paginação' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de turmas retornada com sucesso',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros de paginação inválidos',
+  })
   async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<TurmaEntity>> {
@@ -47,6 +62,11 @@ export class TurmasController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Buscar turma por ID' })
+  @ApiResponse({ status: 200, description: 'Turma encontrada' })
+  @ApiResponse({ status: 400, description: 'ID inválido' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
+  @ApiParam({ name: 'id', description: 'ID da turma (UUID)' })
   async findOne(
     @Param('id', IsUUIDPipe) id: string,
   ): Promise<ResponseDto<TurmaEntity>> {
@@ -55,6 +75,11 @@ export class TurmasController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar turma' })
+  @ApiResponse({ status: 200, description: 'Turma atualizada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
+  @ApiParam({ name: 'id', description: 'ID da turma (UUID)' })
   async update(
     @Param('id', IsUUIDPipe) id: string,
     @Body() updateTurmaDto: UpdateTurmaDto,
@@ -65,6 +90,10 @@ export class TurmasController {
 
   @Delete(':id')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Remover turma' })
+  @ApiResponse({ status: 204, description: 'Turma removida com sucesso' })
+  @ApiResponse({ status: 404, description: 'Turma não encontrada' })
+  @ApiParam({ name: 'id', description: 'ID da turma (UUID)' })
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.turmasService.remove(id);
   }

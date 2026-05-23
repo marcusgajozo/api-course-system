@@ -9,6 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import {
   PaginatedResponseDto,
@@ -22,11 +23,15 @@ import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { CursosService } from '../services/cursos.service';
 
+@ApiTags('Cursos')
 @Controller('api/cursos')
 export class CursosController {
   constructor(private readonly cursosService: CursosService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Criar um novo curso' })
+  @ApiResponse({ status: 201, description: 'Curso criado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
   async create(
     @Body() createCursoDto: CreateCursoDto,
   ): Promise<ResponseDto<CursoEntity>> {
@@ -35,6 +40,15 @@ export class CursosController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar cursos com paginação' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de cursos retornada com sucesso',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros de paginação inválidos',
+  })
   async findAll(
     @Query() query: PaginationQueryDto,
   ): Promise<PaginatedResponseDto<CursoEntity>> {
@@ -47,6 +61,11 @@ export class CursosController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Buscar curso por ID' })
+  @ApiResponse({ status: 200, description: 'Curso encontrado' })
+  @ApiResponse({ status: 400, description: 'ID inválido' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
+  @ApiParam({ name: 'id', description: 'ID do curso (UUID)' })
   async findOne(
     @Param('id', IsUUIDPipe) id: string,
   ): Promise<ResponseDto<CursoEntity>> {
@@ -55,6 +74,11 @@ export class CursosController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar curso' })
+  @ApiResponse({ status: 200, description: 'Curso atualizado com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
+  @ApiParam({ name: 'id', description: 'ID do curso (UUID)' })
   async update(
     @Param('id', IsUUIDPipe) id: string,
     @Body() updateCursoDto: UpdateCursoDto,
@@ -65,6 +89,10 @@ export class CursosController {
 
   @Delete(':id')
   @HttpCode(204)
+  @ApiOperation({ summary: 'Remover curso' })
+  @ApiResponse({ status: 204, description: 'Curso removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
+  @ApiParam({ name: 'id', description: 'ID do curso (UUID)' })
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.cursosService.remove(id);
   }
