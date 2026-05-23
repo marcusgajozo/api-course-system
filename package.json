@@ -23,9 +23,10 @@
     "docker:down": "docker compose -f docker-compose.local.yml down",
     "lint:fix": "eslint --fix; prettier . --write",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "pnpm typeorm migration:generate -d ./src/database/data-source.ts ./src/database/migrations/AutoMigration",
-    "migration:run": "pnpm typeorm migration:run -d ./src/database/data-source.ts",
-    "migration:revert": "pnpm typeorm migration:revert -d ./src/database/data-source.ts"
+    "migration:generate": "pnpm typeorm migration:generate -d ./database/data-source.ts ./database/migrations/AutoMigration",
+    "migration:run": "pnpm typeorm migration:run -d ./database/data-source.ts",
+    "migration:revert": "pnpm typeorm migration:revert -d ./database/data-source.ts",
+    "seed": "ts-node -r tsconfig-paths/register ./database/seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
