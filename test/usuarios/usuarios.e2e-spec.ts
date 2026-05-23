@@ -5,6 +5,10 @@ import request from 'supertest';
 import { Repository } from 'typeorm';
 
 import { ErrorResponseDto } from '@/common/dtos/error-response.dto';
+import {
+  PaginatedResponseDto,
+  PaginationQueryDto,
+} from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
@@ -19,7 +23,7 @@ import {
   usuarioValido,
 } from '../utils/usuarios.util';
 
-describe('(e2e) Turmas', () => {
+describe('(e2e) Usuários', () => {
   let app: INestApplication;
   let httpServer: Server;
   let turmaRepo: Repository<TurmaEntity>;
@@ -183,6 +187,54 @@ describe('(e2e) Turmas', () => {
       expect(body.error).toBe('Unprocessable Entity');
       expect(body.message).toBe(
         `Matrícula para a turma "${turma.titulo}" fora do período permitido`,
+      );
+    });
+  });
+
+  describe(`GET ${routeUsuarioApi}`, () => {
+    it('deve retornar usuários com paginação', async () => {
+      const response = await request(httpServer)
+        .get(routeUsuarioApi)
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<UsuarioEntity>;
+
+      expect(body.data).toBeInstanceOf(Array);
+      expect(body.meta).toBeDefined();
+      expect(body.meta.page).toBe(1);
+      expect(body.meta.limit).toBe(10);
+    });
+
+    it('deve retornar usuários com paginação usando query params', async () => {
+      const query: PaginationQueryDto = { page: 2, limit: 20 };
+
+      const response = await request(httpServer)
+        .get(`${routeUsuarioApi}?page=${query.page}&limit=${query.limit}`)
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<UsuarioEntity>;
+
+      expect(body.data).toBeInstanceOf(Array);
+      expect(body.meta).toBeDefined();
+      expect(body.meta.page).toBe(query.page);
+      expect(body.meta.limit).toBe(query.limit);
+    });
+
+    it('deve retornar 400 para query params inválidos', async () => {
+      const query = { page: -1, limit: 'abc' };
+
+      const response = await request(httpServer)
+        .get(`${routeUsuarioApi}?page=${query.page}&limit=${query.limit}`)
+        .expect(400);
+
+      const body = response.body as ErrorResponseDto;
+
+      expect(body.statusCode).toBe(400);
+      expect(body.error).toBe('Bad Request');
+      expect(body.message).toBeDefined();
+      expect(body.timestamp).toBeDefined();
+      expect(body.path).toBe(
+        `${routeUsuarioApi}?page=${query.page}&limit=${query.limit}`,
       );
     });
   });
