@@ -8,6 +8,21 @@ import { AppModule } from './modules/app/app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const whitelist = process.env.CORS_WHITELIST?.split(',') || [];
+
+  app.enableCors({
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin || whitelist.includes('*') || whitelist.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Bloqueado pelo CORS'));
+      }
+    },
+  });
+
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   app.useGlobalPipes(
