@@ -15,7 +15,12 @@ import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 
 import { createTestApp } from '../utils/create-test-app';
 import { createCurso } from '../utils/cursos.util';
-import { createTurma, routeTurmaApi, turmaValido } from '../utils/turmas.util';
+import {
+  beforeEachTestTurma,
+  createTurma,
+  routeTurmaApi,
+  turmaValido,
+} from '../utils/turmas.util';
 
 describe('(e2e) Turmas', () => {
   let app: INestApplication;
@@ -37,8 +42,7 @@ describe('(e2e) Turmas', () => {
   });
 
   beforeEach(async () => {
-    await turmaRepo.query('TRUNCATE TABLE turmas RESTART IDENTITY CASCADE');
-    await cursoRepo.query('TRUNCATE TABLE cursos RESTART IDENTITY CASCADE');
+    await beforeEachTestTurma(cursoRepo);
   });
 
   describe('POST /api/turmas', () => {

@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { Repository } from 'typeorm';
 
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
@@ -9,14 +10,20 @@ import { createCurso } from './cursos.util';
 
 export const routeTurmaApi = '/api/turmas/';
 
+const dataInicio = new Date();
+dataInicio.setDate(dataInicio.getDate() - 1);
+
+const dataFim = new Date();
+dataFim.setDate(dataFim.getDate() + 10);
+
 export const turma: CreateTurmaDto = {
   titulo: 'Curso de NestJS',
   descricao: 'Aprenda NestJS do zero',
-  quantidadeVagas: 30,
+  quantidadeVagas: 10,
   status: TurmaStatusEnum.DISPONIVEL,
-  dataInicio: new Date('2026-01-01'),
-  dataFim: new Date('2026-01-10'),
-  cursoId: '00000000-0000-0000-0000-000000000000',
+  dataInicio,
+  dataFim,
+  cursoId: faker.string.uuid(),
 };
 
 export const turmaValido = structuredClone(turma);
