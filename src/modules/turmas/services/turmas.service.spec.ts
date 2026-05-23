@@ -352,4 +352,25 @@ describe('(Unit test) TurmasService', () => {
       expect(mockRemove).toHaveBeenCalledWith(turmasIds[0]);
     });
   });
+
+  describe('findAllTurmasUsuario', () => {
+    it('deve retornar turmas do usuario com paginacao', async () => {
+      const usuarioId = '123e4567-e89b-12d3-a456-426614174000';
+      const pagination: PaginationQueryDto = { page: 1, limit: 10 };
+      const turmas = [makeReturnedTurma()];
+
+      const spyFindAndCount = jest
+        .spyOn(repo, 'findAndCount')
+        .mockResolvedValue([turmas, 1]);
+
+      const result = await service.findAllTurmasUsuario(usuarioId, pagination);
+
+      expect(result).toEqual([turmas, 1]);
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: { usuarios: { id: usuarioId } },
+      });
+    });
+  });
 });

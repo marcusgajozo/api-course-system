@@ -185,4 +185,17 @@ export class TurmasService {
       turma.status = TurmaStatusEnum.DISPONIVEL;
     }
   }
+
+  async findAllTurmasUsuario(
+    usuarioId: string,
+    pagination: PaginationQueryDto,
+  ): Promise<[TurmaEntity[], number]> {
+    const { page, limit } = pagination;
+
+    return this.turmaRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      where: { usuarios: { id: usuarioId } },
+    });
+  }
 }
