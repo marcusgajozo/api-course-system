@@ -89,11 +89,27 @@ export class TurmasService {
     for (const turmaId of turmasIds) {
       const turma = await currentManager.findOne(TurmaEntity, {
         where: { id: turmaId },
-        relations: { usuarios: true },
+        relations: { usuarios: true, curso: true },
       });
 
       if (!turma) {
         throw new NotFoundException(`Turma ${turmaId} não encontrada`);
+      }
+
+      const usuarioJaMatriculadoNoCurso = await currentManager.findOne(
+        TurmaEntity,
+        {
+          where: {
+            curso: { id: turma.curso.id },
+            usuarios: { id: usuario.id },
+          },
+        },
+      );
+
+      if (usuarioJaMatriculadoNoCurso) {
+        throw new ConflictException(
+          `Usuário já está matriculado na turma "${usuarioJaMatriculadoNoCurso.titulo}" deste curso.`,
+        );
       }
 
       if (turma.status !== TurmaStatusEnum.DISPONIVEL) {

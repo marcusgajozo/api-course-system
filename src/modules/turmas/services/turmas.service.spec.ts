@@ -210,7 +210,8 @@ describe('(Unit test) TurmasService', () => {
 
       const spyFindOne = jest
         .spyOn(defaultManager, 'findOne')
-        .mockResolvedValue(turma);
+        .mockResolvedValueOnce(turma)
+        .mockResolvedValueOnce(null);
 
       const spySave = jest
         .spyOn(defaultManager, 'save')
@@ -222,7 +223,14 @@ describe('(Unit test) TurmasService', () => {
 
       expect(spyFindOne).toHaveBeenCalledWith(TurmaEntity, {
         where: { id: turma.id },
-        relations: { usuarios: true },
+        relations: { usuarios: true, curso: true },
+      });
+
+      expect(spyFindOne).toHaveBeenCalledWith(TurmaEntity, {
+        where: {
+          curso: { id: turma.curso.id },
+          usuarios: { id: usuario.id },
+        },
       });
       expect(turma.usuarios).toContain(usuario);
       expect(spySave).toHaveBeenCalledWith(TurmaEntity, turma);
@@ -232,7 +240,7 @@ describe('(Unit test) TurmasService', () => {
     it('deve lançar NotFoundException se a turma não for encontrada', async () => {
       const usuario = { id: 'usuario-1' } as UsuarioEntity;
 
-      defaultManager.findOne.mockResolvedValue(null);
+      defaultManager.findOne.mockResolvedValueOnce(null);
 
       await expect(
         service.matricularAluno(usuario, ['turma-inexistente']),
@@ -247,7 +255,9 @@ describe('(Unit test) TurmasService', () => {
         dataFim: new Date(Date.now() + 86400000),
       });
 
-      defaultManager.findOne.mockResolvedValue(turma);
+      defaultManager.findOne
+        .mockResolvedValueOnce(turma)
+        .mockResolvedValueOnce(null);
 
       await expect(
         service.matricularAluno(usuario, [turma.id]),
@@ -264,7 +274,9 @@ describe('(Unit test) TurmasService', () => {
       });
       turma.usuarios = [{ id: 'usuario-2' } as UsuarioEntity];
 
-      defaultManager.findOne.mockResolvedValue(turma);
+      defaultManager.findOne
+        .mockResolvedValueOnce(turma)
+        .mockResolvedValueOnce(null);
 
       await expect(
         service.matricularAluno(usuario, [turma.id]),
@@ -281,11 +293,36 @@ describe('(Unit test) TurmasService', () => {
       });
       turma.usuarios = [];
 
-      defaultManager.findOne.mockResolvedValue(turma);
+      defaultManager.findOne
+        .mockResolvedValueOnce(turma)
+        .mockResolvedValueOnce(null);
 
       await expect(
         service.matricularAluno(usuario, [turma.id]),
       ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('deve lançar ConflictException se o aluno já estiver matriculado no mesmo curso em outra turma', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+      const turma = makeReturnedTurma({
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 10,
+        dataInicio: new Date(Date.now() - 86400000),
+        dataFim: new Date(Date.now() + 86400000),
+      });
+      turma.usuarios = [];
+
+      const turmaJaMatriculada = makeReturnedTurma({
+        titulo: 'Outra Turma',
+      });
+
+      defaultManager.findOne
+        .mockResolvedValueOnce(turma)
+        .mockResolvedValueOnce(turmaJaMatriculada);
+
+      await expect(
+        service.matricularAluno(usuario, [turma.id]),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
