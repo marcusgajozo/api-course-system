@@ -1,4 +1,4 @@
 export enum TurmaStatusEnum {
-  DISPONIVEL = 'disponível',
-  ENCERRADO = 'encerrado',
+  DISPONIVEL = 'DISPONIVEL',
+  ENCERRADO = 'ENCERRADO',
 }
