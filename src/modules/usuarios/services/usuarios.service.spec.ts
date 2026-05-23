@@ -6,6 +6,7 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
+import { makeCancelarMatricula } from '../__test__/utils/make-cancelar-matricula';
 import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
@@ -36,6 +37,7 @@ describe('(Unit test) UsuariosService', () => {
           provide: TurmasService,
           useValue: {
             matricularAluno: jest.fn(),
+            cancelarMatriculaAluno: jest.fn(),
           },
         },
         {
@@ -272,6 +274,31 @@ describe('(Unit test) UsuariosService', () => {
 
       expect(spyMatricularAluno).toHaveBeenCalled();
       expect(spyFindOne).toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelarMatricula', () => {
+    it('deve cancelar a matricula de usuário', async () => {
+      const dto = makeCancelarMatricula();
+      const usuario = makeReturnedUsuario();
+
+      const spyFindOne = jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue(usuario);
+
+      const spyCancelarMatriculaAluno = jest.spyOn(
+        turmasService,
+        'cancelarMatriculaAluno',
+      );
+
+      await expect(
+        service.cancelarMatricula({ ...dto }),
+      ).resolves.toBeUndefined();
+      expect(spyFindOne).toHaveBeenCalledWith(dto.usuarioId);
+      expect(spyCancelarMatriculaAluno).toHaveBeenCalledWith(
+        dto.usuarioId,
+        dto.turmasIds,
+      );
     });
   });
 });

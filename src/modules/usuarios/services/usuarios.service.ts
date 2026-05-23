@@ -5,6 +5,7 @@ import { DataSource, Repository } from 'typeorm';
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
+import { CancelarMatriculaDto } from '../dtos/cancelar-matricula.dto';
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
 import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
@@ -75,5 +76,13 @@ export class UsuariosService {
     await this.dataSource.transaction(async (manager) => {
       await this.turmasService.matricularAluno(usuario, dto.turmasIds, manager);
     });
+  }
+
+  async cancelarMatricula(dto: CancelarMatriculaDto) {
+    await this.findOne(dto.usuarioId);
+    await this.turmasService.cancelarMatriculaAluno(
+      dto.usuarioId,
+      dto.turmasIds,
+    );
   }
 }
