@@ -33,7 +33,10 @@ export class UsuariosService {
         dto.turmasIds!,
         manager,
       );
-      return usuario;
+
+      return manager.findOneOrFail(UsuarioEntity, {
+        where: { id: usuario.id },
+      });
     });
   }
 

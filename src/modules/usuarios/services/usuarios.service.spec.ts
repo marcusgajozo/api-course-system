@@ -86,10 +86,12 @@ describe('(Unit test) UsuariosService', () => {
 
       const managerCreate = jest.fn().mockReturnValue(usuario);
       const managerSave = jest.fn().mockResolvedValue(usuario);
+      const managerfindOneOrFail = jest.fn().mockResolvedValue(usuario);
 
       const manager = {
         create: managerCreate,
         save: managerSave,
+        findOneOrFail: managerfindOneOrFail,
       } as unknown as EntityManager;
 
       (dataSource.transaction as jest.Mock).mockImplementation(
