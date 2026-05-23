@@ -7,6 +7,7 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
+import { makeCancelarMatricula } from '../__test__/utils/make-cancelar-matricula';
 import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
@@ -31,6 +32,7 @@ describe('(Unit test) UsuariosController', () => {
             update: jest.fn(),
             remove: jest.fn(),
             matricular: jest.fn(),
+            cancelarMatricula: jest.fn(),
           },
         },
       ],
@@ -172,6 +174,19 @@ describe('(Unit test) UsuariosController', () => {
 
       await expect(controller.matricular(dto)).rejects.toThrow(Error);
       expect(spyServiceMatricular).toHaveBeenCalledWith(dto);
+    });
+  });
+
+  describe('cancelarMatricula', () => {
+    it('deve chamar service.cancelarMatricula e cancelar a matricula do usuário na turma', async () => {
+      const dto = makeCancelarMatricula();
+
+      const spyServiceCancelarMatricula = jest
+        .spyOn(service, 'cancelarMatricula')
+        .mockResolvedValue(undefined);
+
+      await expect(controller.cancelarMatricula(dto)).resolves.toBeUndefined();
+      expect(spyServiceCancelarMatricula).toHaveBeenCalledWith(dto);
     });
   });
 });

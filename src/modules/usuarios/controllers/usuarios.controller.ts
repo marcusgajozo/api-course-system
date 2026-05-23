@@ -17,6 +17,7 @@ import {
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
+import { CancelarMatriculaDto } from '../dtos/cancelar-matricula.dto';
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
 import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
@@ -77,5 +78,13 @@ export class UsuariosController {
   @HttpCode(204)
   async matricular(@Body() matricularDto: MatricularDto): Promise<void> {
     return this.usuariosService.matricular(matricularDto);
+  }
+
+  @Post('/cancelar-matricula')
+  @HttpCode(204)
+  async cancelarMatricula(
+    @Body() cancelarMatriculaDto: CancelarMatriculaDto,
+  ): Promise<void> {
+    return this.usuariosService.cancelarMatricula(cancelarMatriculaDto);
   }
 }
