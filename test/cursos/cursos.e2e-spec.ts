@@ -11,7 +11,9 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
+import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
+import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { createTestApp } from '../utils/create-test-app';
 import {
@@ -131,6 +133,49 @@ describe('(e2e) Cursos', () => {
       expect(body.message).toBeDefined();
       expect(body.timestamp).toBeDefined();
       expect(body.path).toBe('/api/cursos?page=-1&limit=abc');
+    });
+  });
+
+  describe('GET /api/cursos/disponiveis', () => {
+    it('deve retornar apenas cursos que possuam turmas disponíveis', async () => {
+      const turmaDisponivel = await createTurma(cursoRepo, turmaRepo, {
+        status: TurmaStatusEnum.DISPONIVEL,
+      });
+
+      await createTurma(cursoRepo, turmaRepo, {
+        status: TurmaStatusEnum.ENCERRADO,
+      });
+
+      const response = await request(httpServer)
+        .get('/api/cursos/disponiveis')
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<CursoEntity>;
+
+      expect(body.data).toHaveLength(1);
+      expect(body.data[0].id).toBe(turmaDisponivel.curso.id);
+    });
+
+    it('deve aplicar filtros de titulo e temas', async () => {
+      const curso = await createCurso(cursoRepo, {
+        titulo: 'Curso de Nest Avançado',
+        temas: [TemasEnum.TECNOLOGIA],
+      });
+
+      await createTurma(cursoRepo, turmaRepo, {
+        status: TurmaStatusEnum.DISPONIVEL,
+        cursoId: curso.id,
+      });
+
+      const response = await request(httpServer)
+        .get('/api/cursos/disponiveis?titulo=Nest&temas=TECNOLOGIA')
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<CursoEntity>;
+      const returnedCurso = body.data.find((item) => item.id === curso.id);
+
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      expect(returnedCurso).toBeDefined();
     });
   });
 

@@ -37,8 +37,13 @@ export async function createTurma(
   turmaRepo: Repository<TurmaEntity>,
   turmaDto?: Partial<CreateTurmaDto>,
 ) {
-  const curso = await createCurso(cursoRepo);
+  let cursoId = turmaDto?.cursoId;
+
+  if (!cursoId) {
+    const curso = await createCurso(cursoRepo);
+    cursoId = curso.id;
+  }
   return await turmaRepo.save(
-    turmaRepo.create({ ...{ ...turma, ...turmaDto }, curso: { id: curso.id } }),
+    turmaRepo.create({ ...{ ...turma, ...turmaDto }, curso: { id: cursoId } }),
   );
 }

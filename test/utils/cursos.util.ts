@@ -19,6 +19,9 @@ export async function beforeEachTestCurso(cursoRepo: Repository<CursoEntity>) {
   await cursoRepo.query('TRUNCATE TABLE cursos RESTART IDENTITY CASCADE');
 }
 
-export async function createCurso(repo: Repository<CursoEntity>) {
-  return await repo.save(repo.create(curso));
+export async function createCurso(
+  repo: Repository<CursoEntity>,
+  cursoDto?: Partial<CreateCursoDto>,
+) {
+  return await repo.save(repo.create({ ...curso, ...cursoDto }));
 }
