@@ -5,7 +5,7 @@ export class CreateUsuarioDto {
   email: string;
 
   @IsString()
-  nome;
+  nome: string;
 
   @IsOptional()
   @IsArray()
