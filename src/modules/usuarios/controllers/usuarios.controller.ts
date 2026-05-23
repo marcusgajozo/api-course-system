@@ -48,7 +48,7 @@ export class UsuariosController {
     });
   }
 
-  @Get(':id')
+  @Get('/:id')
   async findOne(
     @Param('id', IsUUIDPipe) id: string,
   ): Promise<ResponseDto<UsuarioEntity>> {
@@ -56,7 +56,7 @@ export class UsuariosController {
     return new ResponseDto<UsuarioEntity>(curso);
   }
 
-  @Patch(':id')
+  @Patch('/:id')
   async update(
     @Param('id', IsUUIDPipe) id: string,
     @Body() updateUsuarioDto: UpdateUsuarioDto,
@@ -68,7 +68,7 @@ export class UsuariosController {
     return new ResponseDto<UsuarioEntity>(updatedUsuario);
   }
 
-  @Delete(':id')
+  @Delete('/:id')
   @HttpCode(204)
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.usuariosService.remove(id);
