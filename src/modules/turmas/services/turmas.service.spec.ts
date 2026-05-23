@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EntityManager, Repository, SelectQueryBuilder } from 'typeorm';
@@ -239,6 +243,8 @@ describe('(Unit test) TurmasService', () => {
       const usuario = { id: 'usuario-1' } as UsuarioEntity;
       const turma = makeReturnedTurma({
         status: TurmaStatusEnum.ENCERRADO,
+        dataInicio: new Date(Date.now() - 86400000),
+        dataFim: new Date(Date.now() + 86400000),
       });
 
       defaultManager.findOne.mockResolvedValue(turma);
@@ -248,11 +254,13 @@ describe('(Unit test) TurmasService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
-    it('deve lançar ConflictException se a turma não tiver vagas disponíveis', async () => {
+    it('deve lançar UnprocessableEntityException se a turma não tiver vagas disponíveis', async () => {
       const usuario = { id: 'usuario-1' } as UsuarioEntity;
       const turma = makeReturnedTurma({
         status: TurmaStatusEnum.DISPONIVEL,
         quantidadeVagas: 1,
+        dataInicio: new Date(Date.now() - 86400000),
+        dataFim: new Date(Date.now() + 86400000),
       });
       turma.usuarios = [{ id: 'usuario-2' } as UsuarioEntity];
 
@@ -260,7 +268,24 @@ describe('(Unit test) TurmasService', () => {
 
       await expect(
         service.matricularAluno(usuario, [turma.id]),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(UnprocessableEntityException);
+    });
+
+    it('deve lançar UnprocessableEntityException se a matrícula estiver fora do período permitido', async () => {
+      const usuario = { id: 'usuario-1' } as UsuarioEntity;
+      const turma = makeReturnedTurma({
+        status: TurmaStatusEnum.DISPONIVEL,
+        quantidadeVagas: 10,
+        dataInicio: new Date(Date.now() - 86400000 * 5),
+        dataFim: new Date(Date.now() - 86400000 * 2),
+      });
+      turma.usuarios = [];
+
+      defaultManager.findOne.mockResolvedValue(turma);
+
+      await expect(
+        service.matricularAluno(usuario, [turma.id]),
+      ).rejects.toThrow(UnprocessableEntityException);
     });
   });
 

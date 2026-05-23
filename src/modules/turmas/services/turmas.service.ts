@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
@@ -102,8 +103,15 @@ export class TurmasService {
       }
 
       if (turma.usuarios.length >= turma.quantidadeVagas) {
-        throw new ConflictException(
+        throw new UnprocessableEntityException(
           `Turma "${turma.titulo}" sem vagas disponíveis`,
+        );
+      }
+
+      const currentDate = new Date();
+      if (currentDate < turma.dataInicio || currentDate > turma.dataFim) {
+        throw new UnprocessableEntityException(
+          `Matrícula para a turma "${turma.titulo}" fora do período permitido`,
         );
       }
 
