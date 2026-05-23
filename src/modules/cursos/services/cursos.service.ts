@@ -1,10 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ArrayOverlap, FindOptionsWhere, ILike, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { CreateCursoDto } from '../dtos/create-curso.dto';
+import { FilterQueryDto } from '../dtos/filter-query.dto';
 import { UpdateCursoDto } from '../dtos/update-curso.dto';
 import { CursoEntity } from '../entities/curso.entity';
 
@@ -49,6 +51,31 @@ export class CursosService {
     return this.cursoRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+    });
+  }
+
+  async findAllCursosTurmaDisponivel(
+    query: PaginationQueryDto & FilterQueryDto,
+  ): Promise<[CursoEntity[], number]> {
+    const { page, limit, temas, titulo } = query;
+
+    const where: FindOptionsWhere<CursoEntity> = {
+      turmas: { status: TurmaStatusEnum.DISPONIVEL },
+    };
+
+    if (titulo) {
+      where.titulo = ILike(`%${titulo}%`);
+    }
+
+    if (temas && temas.length > 0) {
+      where.temas = ArrayOverlap(temas);
+    }
+
+    return this.cursoRepository.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      where,
+      relations: { turmas: true },
     });
   }
 }

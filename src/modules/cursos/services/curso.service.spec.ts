@@ -1,9 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ArrayOverlap, ILike, Repository } from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
+import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
+import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { makeCursoCreated } from '../__test__/utils/make-curso-created';
 import { makeReturnedCurso } from '../__test__/utils/make-returned-curso';
@@ -129,6 +131,54 @@ describe('(Unit test) CursosService', () => {
 
       expect(result).toEqual([cursos, 1]);
       expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
+    });
+  });
+
+  describe('findAllCursosTurmaDisponivel', () => {
+    it('deve retornar cursos com turmas disponíveis aplicando paginação', async () => {
+      const query = { page: 1, limit: 10 };
+      const cursos = [makeReturnedCurso()];
+
+      const spyFindAndCount = jest
+        .spyOn(repo, 'findAndCount')
+        .mockResolvedValue([cursos, 1]);
+
+      const result = await service.findAllCursosTurmaDisponivel(query);
+
+      expect(result).toEqual([cursos, 1]);
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: { turmas: { status: TurmaStatusEnum.DISPONIVEL } },
+        relations: { turmas: true },
+      });
+    });
+
+    it('deve aplicar os filtros de titulo e temas', async () => {
+      const query = {
+        page: 1,
+        limit: 10,
+        titulo: 'nest',
+        temas: [TemasEnum.TECNOLOGIA],
+      };
+      const cursos = [makeReturnedCurso()];
+
+      const spyFindAndCount = jest
+        .spyOn(repo, 'findAndCount')
+        .mockResolvedValue([cursos, 1]);
+
+      await service.findAllCursosTurmaDisponivel(query);
+
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: {
+          turmas: { status: TurmaStatusEnum.DISPONIVEL },
+          titulo: ILike('%nest%'),
+          temas: ArrayOverlap([TemasEnum.TECNOLOGIA]),
+        },
+        relations: { turmas: true },
+      });
     });
   });
 });
