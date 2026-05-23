@@ -97,4 +97,21 @@ export class TurmasController {
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.turmasService.remove(id);
   }
+
+  @Get('/usuarios/:id')
+  async findAllTurmasUsuario(
+    @Param('id', IsUUIDPipe) usuarioId: string,
+    @Query() query: PaginationQueryDto,
+  ): Promise<PaginatedResponseDto<TurmaEntity>> {
+    const [turmas, totalCount] = await this.turmasService.findAllTurmasUsuario(
+      usuarioId,
+      query,
+    );
+
+    return new PaginatedResponseDto<TurmaEntity>(turmas, {
+      page: query.page,
+      limit: query.limit,
+      totalCount: totalCount,
+    });
+  }
 }

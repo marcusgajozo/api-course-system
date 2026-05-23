@@ -26,6 +26,7 @@ describe('(Unit test) TurmasController', () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findAllTurmasUsuario: jest.fn(),
             findOne: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
@@ -144,6 +145,33 @@ describe('(Unit test) TurmasController', () => {
 
       await expect(controller.remove('')).resolves.toBeUndefined();
       expect(spyServiceRemove).toHaveBeenCalledWith('');
+    });
+  });
+
+  describe('findAllTurmasUsuario', () => {
+    it('deve chamar service.findAllTurmasUsuario e retornar as turmas paginadas', async () => {
+      const turmas = [makeReturnedTurma()];
+      const query: PaginationQueryDto = { page: 1, limit: 10 };
+      const usuarioId = '123e4567-e89b-12d3-a456-426614174000';
+
+      const expected: PaginatedResponseDto<TurmaEntity> = {
+        data: turmas,
+        meta: {
+          page: query.page,
+          limit: query.limit,
+          totalCount: 1,
+          totalPages: 1,
+        },
+      };
+
+      const spyFindAllTurmasUsuario = jest
+        .spyOn(service, 'findAllTurmasUsuario')
+        .mockResolvedValue([turmas, 1]);
+
+      await expect(
+        controller.findAllTurmasUsuario(usuarioId, query),
+      ).resolves.toEqual(expected);
+      expect(spyFindAllTurmasUsuario).toHaveBeenCalledWith(usuarioId, query);
     });
   });
 });
