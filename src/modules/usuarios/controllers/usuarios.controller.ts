@@ -18,11 +18,12 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
+import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
 import { UsuariosService } from '../services/usuarios.service';
 
-@Controller('api/usuarios')
+@Controller('/api/usuarios')
 export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
@@ -70,5 +71,11 @@ export class UsuariosController {
   @HttpCode(204)
   async remove(@Param('id', IsUUIDPipe) id: string): Promise<void> {
     return this.usuariosService.remove(id);
+  }
+
+  @Post('/matricular')
+  @HttpCode(204)
+  async matricular(@Body() matricularDto: MatricularDto): Promise<void> {
+    return this.usuariosService.matricular(matricularDto);
   }
 }

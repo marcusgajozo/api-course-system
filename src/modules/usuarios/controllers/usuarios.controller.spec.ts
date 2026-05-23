@@ -7,6 +7,7 @@ import {
 } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
+import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
 import { UsuarioEntity } from '../entities/usuario.entity';
@@ -29,6 +30,7 @@ describe('(Unit test) UsuariosController', () => {
             findOne: jest.fn(),
             update: jest.fn(),
             remove: jest.fn(),
+            matricular: jest.fn(),
           },
         },
       ],
@@ -146,6 +148,30 @@ describe('(Unit test) UsuariosController', () => {
 
       await expect(controller.remove('')).resolves.toBeUndefined();
       expect(spyServiceRemove).toHaveBeenCalledWith('');
+    });
+  });
+
+  describe('matricular', () => {
+    it('deve chamar service.matricular e matricular o usuário na turma com sucesso', async () => {
+      const dto = makeMatricular();
+
+      const spyServiceMatricular = jest
+        .spyOn(service, 'matricular')
+        .mockResolvedValue(undefined);
+
+      await expect(controller.matricular(dto)).resolves.toBeUndefined();
+      expect(spyServiceMatricular).toHaveBeenCalledWith(dto);
+    });
+
+    it('deve chamar service.matricular e retornar um erro ao matricular na turma', async () => {
+      const dto = makeMatricular();
+
+      const spyServiceMatricular = jest
+        .spyOn(service, 'matricular')
+        .mockRejectedValue(new Error());
+
+      await expect(controller.matricular(dto)).rejects.toThrow(Error);
+      expect(spyServiceMatricular).toHaveBeenCalledWith(dto);
     });
   });
 });
