@@ -69,7 +69,7 @@ export class CursosController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Parâmetros de paginação inválidos',
+    description: 'Parâmetros inválidos',
   })
   async findAllCursosTurmaDisponivel(
     @Query() query: CursosQueryDto,
