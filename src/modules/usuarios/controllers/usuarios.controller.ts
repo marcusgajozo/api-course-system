@@ -11,15 +11,13 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import {
-  PaginatedResponseDto,
-  PaginationQueryDto,
-} from '@/common/dtos/pagination.dto';
+import { PaginatedResponseDto } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
 import { CancelarMatriculaDto } from '../dtos/cancelar-matricula.dto';
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
+import { UsuarioQueryDto } from '../dtos/filter-query.dto';
 import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
@@ -58,7 +56,7 @@ export class UsuariosController {
     description: 'Parâmetros de paginação inválidos',
   })
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: UsuarioQueryDto,
   ): Promise<PaginatedResponseDto<UsuarioEntity>> {
     const [usuarios, totalCount] = await this.usuariosService.findAll(query);
     return new PaginatedResponseDto<UsuarioEntity>(usuarios, {

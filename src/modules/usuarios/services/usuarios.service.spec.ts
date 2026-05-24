@@ -1,15 +1,15 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, ILike, Repository } from 'typeorm';
 
-import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
 import { makeCancelarMatricula } from '../__test__/utils/make-cancelar-matricula';
 import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
+import { UsuarioQueryDto } from '../dtos/filter-query.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
 import { UsuariosService } from './usuarios.service';
 
@@ -198,7 +198,7 @@ describe('(Unit test) UsuariosService', () => {
 
   describe('findAll', () => {
     it('deve retornar usuários paginados', async () => {
-      const pagination: PaginationQueryDto = { page: 1, limit: 10 };
+      const pagination: UsuarioQueryDto = { page: 1, limit: 10 };
       const usuarios = [makeReturnedUsuario()];
 
       const spyFindAndCount = jest
@@ -208,7 +208,40 @@ describe('(Unit test) UsuariosService', () => {
       const result = await service.findAll(pagination);
 
       expect(result).toEqual([usuarios, 1]);
-      expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: {},
+      });
+    });
+
+    it('deve aplicar filtros de nome e email', async () => {
+      const query: UsuarioQueryDto = {
+        page: 1,
+        limit: 10,
+        nome: 'João',
+        email: 'joao@',
+      };
+      const usuarios = [makeReturnedUsuario()];
+
+      const spyFindAndCount = jest
+        .spyOn(repo, 'findAndCount')
+        .mockResolvedValue([usuarios, usuarios.length]);
+
+      const result = await service.findAll(query);
+
+      expect(result).toEqual([usuarios, 1]);
+
+      expect(spyFindAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 10,
+          where: {
+            nome: ILike(`%${query.nome}%`),
+            email: ILike(`%${query.email}%`),
+          },
+        }),
+      );
     });
   });
 

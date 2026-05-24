@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, FindOptionsWhere, ILike, Repository } from 'typeorm';
 
-import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmasService } from '@/modules/turmas/services/turmas.service';
 
 import { CancelarMatriculaDto } from '../dtos/cancelar-matricula.dto';
 import { CreateUsuarioDto } from '../dtos/create-usuario.dto';
+import { UsuarioQueryDto } from '../dtos/filter-query.dto';
 import { MatricularDto } from '../dtos/matricular.dto';
 import { UpdateUsuarioDto } from '../dtos/update-usuario.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
@@ -63,14 +63,23 @@ export class UsuariosService {
     await this.usuarioRepository.delete(id);
   }
 
-  async findAll(
-    pagination: PaginationQueryDto,
-  ): Promise<[UsuarioEntity[], number]> {
-    const { page, limit } = pagination;
+  async findAll(query: UsuarioQueryDto): Promise<[UsuarioEntity[], number]> {
+    const { page, limit, nome, email } = query;
+
+    const where: FindOptionsWhere<UsuarioEntity> = {};
+
+    if (nome) {
+      where.nome = ILike(`%${nome}%`);
+    }
+
+    if (email) {
+      where.email = ILike(`%${email}%`);
+    }
 
     return this.usuarioRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+      where,
     });
   }
 

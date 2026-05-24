@@ -225,6 +225,30 @@ describe('(e2e) Usuários', () => {
       expect(body.meta.limit).toBe(query.limit);
     });
 
+    it('deve aplicar filtros de nome e email', async () => {
+      const u1 = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+      const u2 = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      await usuarioRepo.update(u1.id, {
+        nome: 'Marcus Gajozo',
+        email: 'marcus@gajozo.com',
+      });
+      await usuarioRepo.update(u2.id, {
+        nome: 'Outro Usuario',
+        email: 'outro@email.com',
+      });
+
+      const response = await request(httpServer)
+        .get(`${routeUsuarioApi}?nome=Marcus&email=marcus@`)
+        .expect(200);
+
+      const body = response.body as PaginatedResponseDto<UsuarioEntity>;
+
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      const returnedUsuario = body.data.find((item) => item.id === u1.id);
+      expect(returnedUsuario).toBeDefined();
+    });
+
     it('deve retornar 400 para query params inválidos', async () => {
       const query = { page: -1, limit: 'abc' };
 

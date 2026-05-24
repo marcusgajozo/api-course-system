@@ -1,16 +1,14 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 
-import {
-  PaginatedResponseDto,
-  PaginationQueryDto,
-} from '@/common/dtos/pagination.dto';
+import { PaginatedResponseDto } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 
 import { makeCancelarMatricula } from '../__test__/utils/make-cancelar-matricula';
 import { makeMatricular } from '../__test__/utils/make-matricular';
 import { makeReturnedUsuario } from '../__test__/utils/make-returned-usuario';
 import { makeUsuarioCreated } from '../__test__/utils/make-usuario-created';
+import { UsuarioQueryDto } from '../dtos/filter-query.dto';
 import { UsuarioEntity } from '../entities/usuario.entity';
 import { UsuariosService } from '../services/usuarios.service';
 import { UsuariosController } from './usuarios.controller';
@@ -72,7 +70,7 @@ describe('(Unit test) UsuariosController', () => {
   describe('findAll', () => {
     it('deve chamar service.findAll e retornar as usuarios paginados', async () => {
       const usuarios = [makeReturnedUsuario(), makeReturnedUsuario()];
-      const query: PaginationQueryDto = { page: 1, limit: 10 };
+      const query: UsuarioQueryDto = { page: 1, limit: 10 };
 
       const expected: PaginatedResponseDto<UsuarioEntity> = {
         data: usuarios,

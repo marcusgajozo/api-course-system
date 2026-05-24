@@ -42,6 +42,7 @@ export default defineConfig(
       'commitlint.config.mjs',
       'jest.config.js',
       'dist/**',
+      'coverage',
     ],
   },
   eslint.configs.recommended,
