@@ -24,7 +24,10 @@ export async function beforeEachTestUsuario(
   cursoRepo: Repository<CursoEntity>,
 ) {
   await beforeEachTestCurso(cursoRepo);
-  await usuarioRepo.query('TRUNCATE TABLE usuarios RESTART IDENTITY CASCADE');
+  const schema = process.env.DATABASE_SCHEMA ?? 'test';
+  await usuarioRepo.query(
+    `TRUNCATE TABLE "${schema}"."usuarios" RESTART IDENTITY CASCADE`,
+  );
 }
 
 export async function createUsuario(

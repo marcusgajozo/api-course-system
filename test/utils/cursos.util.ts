@@ -16,7 +16,10 @@ export const curso: CreateCursoDto = {
 export const cursoValido = structuredClone(curso);
 
 export async function beforeEachTestCurso(cursoRepo: Repository<CursoEntity>) {
-  await cursoRepo.query('TRUNCATE TABLE cursos RESTART IDENTITY CASCADE');
+  const schema = process.env.DATABASE_SCHEMA ?? 'test';
+  await cursoRepo.query(
+    `TRUNCATE TABLE "${schema}"."cursos" RESTART IDENTITY CASCADE`,
+  );
 }
 
 export async function createCurso(

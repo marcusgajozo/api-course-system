@@ -19,6 +19,7 @@ import { appConfig } from './configs/app.config';
         username: config.database.username,
         password: config.database.password,
         database: config.database.database,
+        schema: config.database.schema,
         autoLoadEntities: true,
       }),
     }),
