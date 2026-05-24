@@ -43,7 +43,9 @@ export class TurmaEntity extends BaseEntity {
   @RelationId((turma: TurmaEntity) => turma.curso)
   cursoId: string;
 
-  @ManyToMany(() => UsuarioEntity, (usuario) => usuario.turmas)
+  @ManyToMany(() => UsuarioEntity, (usuario) => usuario.turmas, {
+    onDelete: 'CASCADE',
+  })
   usuarios: UsuarioEntity[];
 
   @RelationId((turma: TurmaEntity) => turma.usuarios)

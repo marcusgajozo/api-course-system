@@ -11,11 +11,14 @@ export class UsuarioEntity extends BaseEntity {
   @Column()
   nome: string;
 
-  @ManyToMany(() => TurmaEntity, (turma) => turma.usuarios)
+  @ManyToMany(() => TurmaEntity, (turma) => turma.usuarios, {
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE',
+  })
   @JoinTable({
     name: 'usuarios_turmas',
-    joinColumn: { name: 'usuario_id' },
-    inverseJoinColumn: { name: 'turma_id' },
+    joinColumn: { name: 'usuario_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'turma_id', referencedColumnName: 'id' },
   })
   turmas: TurmaEntity[];
 

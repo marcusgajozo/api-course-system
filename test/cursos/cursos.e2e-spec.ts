@@ -14,6 +14,7 @@ import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
 import { TurmaEntity } from '@/modules/turmas/entities/turma.entity';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
+import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { createTestApp } from '../utils/create-test-app';
 import {
@@ -23,12 +24,14 @@ import {
   routeCursoApi,
 } from '../utils/cursos.util';
 import { createTurma } from '../utils/turmas.util';
+import { createUsuario } from '../utils/usuarios.util';
 
 describe('(e2e) Cursos', () => {
   let app: INestApplication;
   let httpServer: Server;
   let cursoRepo: Repository<CursoEntity>;
   let turmaRepo: Repository<TurmaEntity>;
+  let usuarioRepo: Repository<UsuarioEntity>;
 
   beforeAll(async () => {
     const testApp = await createTestApp();
@@ -37,6 +40,7 @@ describe('(e2e) Cursos', () => {
     httpServer = testApp.httpServer;
     cursoRepo = testApp.module.get(getRepositoryToken(CursoEntity));
     turmaRepo = testApp.module.get(getRepositoryToken(TurmaEntity));
+    usuarioRepo = testApp.module.get(getRepositoryToken(UsuarioEntity));
   });
 
   afterAll(async () => {
@@ -285,6 +289,31 @@ describe('(e2e) Cursos', () => {
 
       expect(deletedCurso).toBeNull();
       expect(deletedTurmas.length).toBe(0);
+    });
+
+    it('deve deletar um curso que possui turma com aluno matriculado e retornar 204 sem erro de constraint', async () => {
+      const turma = await createTurma(cursoRepo, turmaRepo);
+      const curso = turma.curso;
+
+      const usuario = await createUsuario(usuarioRepo, turmaRepo, cursoRepo);
+
+      usuario.turmas.push(turma);
+      await usuarioRepo.save(usuario);
+
+      await request(httpServer).delete(`/api/cursos/${curso.id}`).expect(204);
+
+      const deletedCurso = await cursoRepo.findOneBy({ id: curso.id });
+      const deletedTurma = await turmaRepo.findOneBy({ id: turma.id });
+
+      const keptUsuario = await usuarioRepo.findOne({
+        where: { id: usuario.id },
+        relations: { turmas: true },
+      });
+
+      expect(deletedCurso).toBeNull();
+      expect(deletedTurma).toBeNull();
+      expect(keptUsuario).toBeDefined();
+      expect(keptUsuario?.turmas.some((t) => t.id === turma.id)).toBeFalsy();
     });
 
     it('deve retornar 404 para curso inexistente', async () => {
