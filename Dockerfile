@@ -13,7 +13,7 @@ WORKDIR /usr/src/app
 COPY package.json pnpm-lock.yaml* ./
 
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    corepack enable pnpm && pnpm install --frozen-lockfile
+    corepack enable pnpm && pnpm install --frozen-lockfile --ignore-scripts
 
 COPY . .
 
@@ -31,7 +31,7 @@ WORKDIR /usr/src/app
 COPY package.json pnpm-lock.yaml* ./
 
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    corepack enable pnpm && pnpm install --frozen-lockfile --prod
+    corepack enable pnpm && pnpm install --frozen-lockfile --prod --ignore-scripts
 
 COPY --from=builder /usr/src/app/dist ./dist
 
