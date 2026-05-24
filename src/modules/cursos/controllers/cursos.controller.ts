@@ -11,10 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
-import {
-  PaginatedResponseDto,
-  PaginationQueryDto,
-} from '@/common/dtos/pagination.dto';
+import { PaginatedResponseDto } from '@/common/dtos/pagination.dto';
 import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
@@ -51,7 +48,7 @@ export class CursosController {
     description: 'Parâmetros de paginação inválidos',
   })
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: CursosQueryDto,
   ): Promise<PaginatedResponseDto<CursoEntity>> {
     const [cursos, totalCount] = await this.cursosService.findAll(query);
     return new PaginatedResponseDto<CursoEntity>(cursos, {

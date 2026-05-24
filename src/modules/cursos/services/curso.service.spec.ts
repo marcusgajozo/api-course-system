@@ -3,12 +3,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ArrayOverlap, ILike, Repository } from 'typeorm';
 
-import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TemasEnum } from '@/modules/cursos/enums/temas.enum';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { makeCursoCreated } from '../__test__/utils/make-curso-created';
 import { makeReturnedCurso } from '../__test__/utils/make-returned-curso';
+import { CursosQueryDto } from '../dtos/filter-query.dto';
 import { CursoEntity } from '../entities/curso.entity';
 import { CursosService } from './cursos.service';
 
@@ -28,6 +28,7 @@ describe('(Unit test) CursosService', () => {
             create: jest.fn(),
             save: jest.fn(),
             delete: jest.fn(),
+            findOne: jest.fn(),
           },
         },
       ],
@@ -52,7 +53,7 @@ describe('(Unit test) CursosService', () => {
   describe('findOne', () => {
     it('deve retornar o curso quando encontrado', async () => {
       const curso = makeReturnedCurso();
-      repo.findOneBy.mockResolvedValue(curso);
+      repo.findOne.mockResolvedValue(curso);
 
       await expect(service.findOne(curso.id)).resolves.toEqual(curso);
     });
@@ -110,7 +111,7 @@ describe('(Unit test) CursosService', () => {
     });
 
     it('deve lançar NotFoundException para curso inexistente', async () => {
-      repo.findOneBy.mockResolvedValue(null);
+      repo.findOne.mockResolvedValue(null);
 
       await expect(service.remove('id-inexistente')).rejects.toThrow(
         NotFoundException,
@@ -120,7 +121,7 @@ describe('(Unit test) CursosService', () => {
 
   describe('findAll', () => {
     it('deve retornar cursos paginados', async () => {
-      const pagination: PaginationQueryDto = { page: 1, limit: 10 };
+      const pagination: CursosQueryDto = { page: 1, limit: 10 };
       const cursos = [makeReturnedCurso()];
 
       const spyFindAndCount = jest
@@ -130,7 +131,11 @@ describe('(Unit test) CursosService', () => {
       const result = await service.findAll(pagination);
 
       expect(result).toEqual([cursos, 1]);
-      expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: {},
+      });
     });
   });
 

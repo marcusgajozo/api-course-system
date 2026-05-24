@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ArrayOverlap, FindOptionsWhere, ILike, Repository } from 'typeorm';
 
-import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { TurmaStatusEnum } from '@/modules/turmas/enums/turma-status.enum';
 
 import { CreateCursoDto } from '../dtos/create-curso.dto';
@@ -23,7 +22,10 @@ export class CursosService {
   }
 
   async findOne(id: string): Promise<CursoEntity> {
-    const curso = await this.cursoRepository.findOneBy({ id });
+    const curso = await this.cursoRepository.findOne({
+      where: { id },
+      relations: { turmas: true },
+    });
 
     if (!curso) {
       throw new NotFoundException('Curso não encontrado');
@@ -43,14 +45,23 @@ export class CursosService {
     await this.cursoRepository.delete(id);
   }
 
-  async findAll(
-    pagination: PaginationQueryDto,
-  ): Promise<[CursoEntity[], number]> {
-    const { page, limit } = pagination;
+  async findAll(query: CursosQueryDto): Promise<[CursoEntity[], number]> {
+    const { page, limit, temas, titulo } = query;
+
+    const where: FindOptionsWhere<CursoEntity> = {};
+
+    if (titulo) {
+      where.titulo = ILike(`%${titulo}%`);
+    }
+
+    if (temas && temas.length > 0) {
+      where.temas = ArrayOverlap(temas);
+    }
 
     return this.cursoRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+      where,
     });
   }
 
