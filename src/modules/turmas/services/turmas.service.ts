@@ -5,7 +5,13 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, In, Repository } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsWhere,
+  ILike,
+  In,
+  Repository,
+} from 'typeorm';
 
 import { PaginationQueryDto } from '@/common/dtos/pagination.dto';
 import { CursoEntity } from '@/modules/cursos/entities/curso.entity';
@@ -13,6 +19,7 @@ import { CursosService } from '@/modules/cursos/services/cursos.service';
 import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { CreateTurmaDto } from '../dtos/create-turma.dto';
+import { TurmasQueryDto } from '../dtos/filter-query.dto';
 import { UpdateTurmaDto } from '../dtos/update-turma.dto';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmaStatusEnum } from '../enums/turma-status.enum';
@@ -68,14 +75,19 @@ export class TurmasService {
     await this.turmaRepository.delete(id);
   }
 
-  async findAll(
-    pagination: PaginationQueryDto,
-  ): Promise<[TurmaEntity[], number]> {
-    const { page, limit } = pagination;
+  async findAll(query: TurmasQueryDto): Promise<[TurmaEntity[], number]> {
+    const { page, limit, titulo } = query;
+
+    const where: FindOptionsWhere<TurmaEntity> = {};
+
+    if (titulo) {
+      where.titulo = ILike(`%${titulo}%`);
+    }
 
     return this.turmaRepository.findAndCount({
       skip: (page - 1) * limit,
       take: limit,
+      where,
     });
   }
 

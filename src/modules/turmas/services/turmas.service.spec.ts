@@ -14,6 +14,7 @@ import { UsuarioEntity } from '@/modules/usuarios/entities/usuario.entity';
 
 import { makeReturnedTurma } from '../__test__/utils/make-returned-turma';
 import { makeTurmaCreated } from '../__test__/utils/make-turma-created';
+import { TurmasQueryDto } from '../dtos/filter-query.dto';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmaStatusEnum } from '../enums/turma-status.enum';
 import { TurmasService } from './turmas.service';
@@ -179,7 +180,7 @@ describe('(Unit test) TurmasService', () => {
 
   describe('findAll', () => {
     it('deve retornar turmas paginados', async () => {
-      const pagination: PaginationQueryDto = { page: 1, limit: 10 };
+      const pagination: TurmasQueryDto = { page: 1, limit: 10 };
       const turmas = [makeReturnedTurma()];
 
       const spyFindAndCount = jest
@@ -189,7 +190,11 @@ describe('(Unit test) TurmasService', () => {
       const result = await service.findAll(pagination);
 
       expect(result).toEqual([turmas, 1]);
-      expect(spyFindAndCount).toHaveBeenCalledWith({ skip: 0, take: 10 });
+      expect(spyFindAndCount).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+        where: {},
+      });
     });
   });
 

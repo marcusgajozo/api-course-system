@@ -19,6 +19,7 @@ import { ResponseDto } from '@/common/dtos/response.dto';
 import { IsUUIDPipe } from '@/common/pipes/is-uuid.pipe';
 
 import { CreateTurmaDto } from '../dtos/create-turma.dto';
+import { TurmasQueryDto } from '../dtos/filter-query.dto';
 import { UpdateTurmaDto } from '../dtos/update-turma.dto';
 import { TurmaEntity } from '../entities/turma.entity';
 import { TurmasService } from '../services/turmas.service';
@@ -51,7 +52,7 @@ export class TurmasController {
     description: 'Parâmetros de paginação inválidos',
   })
   async findAll(
-    @Query() query: PaginationQueryDto,
+    @Query() query: TurmasQueryDto,
   ): Promise<PaginatedResponseDto<TurmaEntity>> {
     const [turmas, totalCount] = await this.turmasService.findAll(query);
     return new PaginatedResponseDto<TurmaEntity>(turmas, {
