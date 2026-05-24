@@ -75,7 +75,7 @@ export class UsuariosController {
   async findOne(
     @Param('id', IsUUIDPipe) id: string,
   ): Promise<ResponseDto<UsuarioEntity>> {
-    const curso = await this.usuariosService.findOne(id);
+    const curso = await this.usuariosService.findOneWithRelations(id);
     return new ResponseDto<UsuarioEntity>(curso);
   }
 

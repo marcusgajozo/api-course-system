@@ -31,6 +31,7 @@ describe('(Unit test) UsuariosController', () => {
             remove: jest.fn(),
             matricular: jest.fn(),
             cancelarMatricula: jest.fn(),
+            findOneWithRelations: jest.fn(),
           },
         },
       ],
@@ -92,22 +93,22 @@ describe('(Unit test) UsuariosController', () => {
   });
 
   describe('findOne', () => {
-    it('deve chamar service.findOne e retornar a usuario', async () => {
+    it('deve chamar service.findOneWithRelations e retornar a usuario', async () => {
       const usuario = makeReturnedUsuario();
 
-      const spyFindOne = jest
-        .spyOn(service, 'findOne')
+      const spyFindOneWithRelations = jest
+        .spyOn(service, 'findOneWithRelations')
         .mockResolvedValue(usuario);
 
       await expect(controller.findOne(usuario.id)).resolves.toEqual(
         new ResponseDto<UsuarioEntity>(usuario),
       );
-      expect(spyFindOne).toHaveBeenCalledWith(usuario.id);
+      expect(spyFindOneWithRelations).toHaveBeenCalledWith(usuario.id);
     });
 
     it('deve lançar erro se usuario não for encontrado', async () => {
       const spyFindOne = jest
-        .spyOn(service, 'findOne')
+        .spyOn(service, 'findOneWithRelations')
         .mockRejectedValue(new NotFoundException());
 
       await expect(controller.findOne('')).rejects.toThrow(NotFoundException);

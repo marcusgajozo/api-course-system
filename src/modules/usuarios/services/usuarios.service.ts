@@ -40,6 +40,19 @@ export class UsuariosService {
     });
   }
 
+  async findOneWithRelations(id: string): Promise<UsuarioEntity> {
+    const usuario = await this.usuarioRepository.findOne({
+      where: { id },
+      relations: { turmas: { curso: true } },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario não encontrada');
+    }
+
+    return usuario;
+  }
+
   async findOne(id: string): Promise<UsuarioEntity> {
     const usuario = await this.usuarioRepository.findOneBy({ id });
 
