@@ -96,7 +96,7 @@ Para rodar a aplicação em produção utilizando o Docker com a imagem otimizad
 
 ```bash
 # Renomeia o arquivo de ambiente de produção para o padrão
-mv .env.prd .env
+cp .env.prd.example .env
 
 # Constrói e sobe a aplicação + banco de dados
 docker compose up -d --build
